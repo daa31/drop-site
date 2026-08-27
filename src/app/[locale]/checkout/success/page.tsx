@@ -14,9 +14,9 @@ export default async function Success({
   return (
     <div className="container-f py-20 text-center">
       <h1 className="font-display text-3xl">{t("success")}</h1>
-      <p className="mt-4 text-graphite/70">{t("successText").replace("{n}", n || "")}</p>
+      <p className="mt-4 text-graphite/70">{t("successText", { n: n || "" })}</p>
       <Link href="/catalog" className="mt-8 inline-block rounded-full bg-ink px-6 py-3 text-white">
-        FORTIS
+        Locko
       </Link>
     </div>
   );

@@ -11,9 +11,7 @@ import { getCart } from "@/lib/cart";
 import { getSession } from "@/lib/auth";
 import { siteSettings } from "@/lib/settings";
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function LocaleLayout({
   children,
@@ -26,7 +24,10 @@ export default async function LocaleLayout({
   if (!routing.locales.includes(locale as "uk")) notFound();
   const messages = await getMessages();
   const [categories, cart, session, settings] = await Promise.all([
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.category.findMany({
+      where: { products: { some: { product: { isActive: true } } } },
+      orderBy: { sortOrder: "asc" },
+    }),
     getCart(),
     getSession(),
     siteSettings(),

@@ -35,6 +35,7 @@ export function formatOrderTelegram(o: {
   number: number;
   name: string;
   phone: string;
+  telegram?: string | null;
   items: string;
   total: number;
   delivery: string;
@@ -47,6 +48,7 @@ export function formatOrderTelegram(o: {
     "",
     `Клієнт:\n${o.name}`,
     `Телефон:\n${o.phone}`,
+    o.telegram ? `Telegram:\n${o.telegram}` : "",
     `Товари:\n${o.items}`,
     `Сума:\n${Math.round(o.total)} грн`,
     `Доставка:\n${o.delivery}`,

@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { ProductCard, CardProduct } from "@/components/ProductCard";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 
 export default function WishlistPage() {
   const t = useTranslations("wishlist");
   const c = useTranslations("cart");
+  const locale = useLocale();
   const [items, setItems] = useState<CardProduct[]>([]);
   useEffect(() => {
     const slugs: string[] = JSON.parse(localStorage.getItem("fortis_wish") || "[]");
@@ -45,7 +47,7 @@ export default function WishlistPage() {
       <h1 className="font-display text-3xl">{t("title")}</h1>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((p) => (
-          <ProductCard key={p.id} p={p} locale="uk" />
+          <ProductCard key={p.id} p={p} locale={locale} />
         ))}
       </div>
     </div>

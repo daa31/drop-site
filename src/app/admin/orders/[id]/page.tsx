@@ -27,6 +27,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       <p className="mt-2 text-sm">
         {o.customer?.name} · {o.customer?.phone} · {o.deliveryCity} · {o.warehouse}
       </p>
+      {o.customer?.notes && <p className="mt-1 text-sm text-graphite/70">{o.customer.notes}</p>}
       <div className="mt-4 text-sm">
         Продаж {formatPrice(o.total)} · Закуп {formatPrice(o.supplierCost)} · Комісія {formatPrice(o.paymentFee)} ·
         Реклама {formatPrice(o.adSpend)} · Прибуток {formatPrice(o.profit)}

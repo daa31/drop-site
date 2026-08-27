@@ -1,35 +1,46 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 export function ProductGallery({ images, alt }: { images: { url: string }[]; alt: string }) {
   const [i, setI] = useState(0);
-  const [full, setFull] = useState(false);
+  const [origin, setOrigin] = useState("50% 50%");
   const current = images[i]?.url;
+
   return (
-    <div>
-      <button className="relative w-full overflow-hidden rounded-3xl bg-mist" onClick={() => setFull(true)}>
-        {current && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={current} alt={alt} className="aspect-square w-full object-contain bg-white" />
+    <div className="min-w-0">
+      <div
+        className="group relative aspect-[4/3] min-h-[320px] w-full overflow-hidden rounded-r-lg border-y border-r border-black/10 bg-white shadow-card sm:min-h-[420px] lg:min-h-[560px]"
+        onMouseMove={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / rect.width) * 100;
+          const y = ((event.clientY - rect.top) / rect.height) * 100;
+          setOrigin(`${x}% ${y}%`);
+        }}
+        onMouseLeave={() => setOrigin("50% 50%")}
+      >
+        {current ? (
+          <Image
+            src={current}
+            alt={alt}
+            fill
+            priority={i === 0}
+            sizes="(min-width: 1024px) 62vw, 100vw"
+            style={{ transformOrigin: origin }}
+            className="bg-white object-contain p-4 transition duration-300 group-hover:scale-[1.75] sm:p-6"
+          />
+        ) : (
+          <div className="grid h-full place-items-center text-graphite/30">Locko</div>
         )}
-      </button>
-      <div className="mt-3 flex gap-2 overflow-x-auto">
-        {images.map((img, idx) => (
-          <button
-            key={img.url + idx}
-            onClick={() => setI(idx)}
-            className={`h-16 w-16 overflow-hidden rounded-xl border ${i === idx ? "border-ink" : "border-transparent"}`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img.url} alt="" className="h-full w-full object-cover" />
-          </button>
-        ))}
       </div>
-      {full && current && (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-ink/90 p-6" onClick={() => setFull(false)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={current} alt={alt} className="max-h-full max-w-full object-contain" />
+      {images.length > 1 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {images.map((img, idx) => (
+            <button key={img.url + idx} onClick={() => setI(idx)} className={`h-20 w-20 shrink-0 overflow-hidden rounded-lg border bg-white ${i === idx ? "border-ink" : "border-black/10"}`}>
+              <Image src={img.url} alt="" width={80} height={80} sizes="80px" className="h-full w-full object-contain p-1" />
+            </button>
+          ))}
         </div>
       )}
     </div>

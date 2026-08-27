@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/robert/Desktop/drop/src/app/%5Blocale%5D/error.tsx"],"sourcesContent":["\"use client\";\r\n\r\nexport default function ErrorPage() {\r\n  return (\r\n    <div className=\"container-f py-20 text-center\">\r\n      <h1 className=\"font-display text-3xl\">500</h1>\r\n      <p className=\"mt-3 text-graphite/70\">Сталася помилка. Спробуйте пізніше.</p>\r\n    </div>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;;AAAA;;AAEe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;gBAAG,WAAU;0BAAwB;;;;;;0BACtC,8OAAC;gBAAE,WAAU;0BAAwB;;;;;;;;;;;;AAG3C","debugId":null}}]
+}

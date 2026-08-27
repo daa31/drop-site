@@ -15,7 +15,7 @@ export async function Footer({
     <footer className="mt-20 border-t border-black/5 bg-white">
       <div className="container-f grid gap-10 py-14 md:grid-cols-4">
         <div>
-          <div className="font-display text-lg tracking-[0.2em]">FORTIS</div>
+          <div className="font-display text-lg tracking-[0.2em]">Locko</div>
           <p className="mt-3 max-w-xs text-sm text-graphite/70">{f("copy")}</p>
         </div>
         <div className="text-sm">
@@ -42,7 +42,7 @@ export async function Footer({
         </div>
       </div>
       <div className="container-f flex flex-wrap gap-4 border-t border-black/5 py-5 text-xs text-graphite/60">
-        <span>© {new Date().getFullYear()} FORTIS</span>
+        <span>© {new Date().getFullYear()} Locko</span>
         <Link href="/privacy">{legal("privacy")}</Link>
         <Link href="/terms">{legal("terms")}</Link>
       </div>

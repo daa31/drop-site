@@ -1,7 +1,7 @@
 {
   "meta": {
-    "site": "FORTIS",
-    "defaultTitle": "FORTIS — professional eye protection",
+    "site": "Locko",
+    "defaultTitle": "Locko - professional eye protection",
     "defaultDescription": "Safety, sport and tactical eyewear. Nova Poshta delivery across Ukraine."
   },
   "nav": {
@@ -31,7 +31,7 @@
     "sale": "Sale",
     "new": "New",
     "popular": "Popular products",
-    "why": "Why FORTIS",
+    "why": "Why Locko",
     "why1t": "Professional gear",
     "why1d": "Assortment for work, sport, tactical use and industry.",
     "why2t": "Original products",
@@ -57,6 +57,12 @@
     "expected": "Incoming",
     "notify": "Notify me",
     "qty": "Quantity",
+    "total": "Total",
+    "oneItem": "item",
+    "decreaseQty": "Decrease quantity",
+    "increaseQty": "Increase quantity",
+    "share": "Share",
+    "copied": "Link copied",
     "short": "Overview",
     "benefits": "Benefits",
     "specs": "Specifications",
@@ -81,6 +87,27 @@
     "filters": "Filters",
     "reset": "Reset",
     "apply": "Apply",
+    "category": "Category",
+    "allCategories": "All categories",
+    "allBrands": "All brands",
+    "price": "Price",
+    "from": "from",
+    "to": "to",
+    "lens": "Lens",
+    "lensPlaceholder": "clear, gray, bronze",
+    "allLenses": "All lenses",
+    "lensClear": "Clear",
+    "lensGray": "Gray / smoke",
+    "lensBronze": "Bronze",
+    "lensYellow": "Yellow",
+    "lensMirror": "Mirror",
+    "lensDark": "Tinted",
+    "antiFog": "Anti-Fog",
+    "photochromic": "Photochromic",
+    "polarized": "Polarized",
+    "rxInsert": "Rx insert",
+    "interchangeable": "Interchangeable",
+    "closeFilters": "Close filters",
     "empty": "Nothing found. Change filters or query."
   },
   "cart": {
@@ -107,9 +134,9 @@
     "agree": "I agree to the store terms and personal data processing",
     "submit": "Place order",
     "success": "Order received",
-    "successText": "Order #{n} has been received. We will contact you to confirm."
+    "successText": "Order No. {n} has been received. We will contact you to confirm."
   },
-  "wishlist": { "title": "Wishlist", "empty": "Save products so you don’t lose them." },
+  "wishlist": { "title": "Wishlist", "empty": "Save products so you don't lose them." },
   "compare": { "title": "Compare", "empty": "Add models to compare." },
   "guide": {
     "title": "Find glasses",

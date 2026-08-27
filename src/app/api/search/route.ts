@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
       slug: p.slug,
       sku: p.sku,
       name: tJson(p.name, locale),
+      image: p.images[0]?.url || null,
     })),
   });
 }

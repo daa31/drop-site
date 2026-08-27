@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen bg-mist">
       <aside className="hidden w-56 shrink-0 border-r bg-white p-4 md:block">
-        <div className="font-display tracking-[0.2em]">FORTIS</div>
+        <div className="font-display tracking-[0.2em]">Locko</div>
         <nav className="mt-6 grid gap-1 text-sm">
           {NAV.map(([l, h]) => (
             <Link key={h} href={h} className="rounded-lg px-2 py-1.5 hover:bg-mist">

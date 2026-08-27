@@ -1,0 +1,25 @@
+"use strict";
+/*
+ * ATTENTION: An "eval-source-map" devtool has been used.
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+exports.id = "_rsc_messages_en_json";
+exports.ids = ["_rsc_messages_en_json"];
+exports.modules = {
+
+/***/ "(rsc)/./messages/en.json":
+/*!**************************!*\
+  !*** ./messages/en.json ***!
+  \**************************/
+/***/ ((module) => {
+
+module.exports = /*#__PURE__*/JSON.parse('{"meta":{"site":"Locko","defaultTitle":"Locko - professional eye protection","defaultDescription":"Safety, sport and tactical eyewear. Nova Poshta delivery across Ukraine."},"nav":{"catalog":"Catalog","search":"Search by name, brand or SKU","wishlist":"Wishlist","compare":"Compare","cart":"Cart","account":"Account","login":"Sign in","guide":"Find glasses","delivery":"Delivery & payment","contacts":"Contacts","faq":"FAQ","brands":"Brands","menu":"Menu"},"hero":{"title":"Professional eye protection","subtitle":"Safety, sport and tactical glasses for work, sport and the outdoors","catalog":"Browse catalog","guide":"Find glasses"},"home":{"categories":"Categories","hits":"Bestsellers","sale":"Sale","new":"New","popular":"Popular products","why":"Why Locko","why1t":"Professional gear","why1d":"Assortment for work, sport, tactical use and industry.","why2t":"Original products","why2d":"Pyramex, Global Vision, Venture Gear and other catalog brands.","why3t":"Quality control","why3d":"We check SKU, kit and condition before handing the order over.","why4t":"Fast delivery","why4d":"Nova Poshta across Ukraine after confirmation.","why5t":"Support","why5d":"Help with lens, fit and accessories.","why6t":"Convenient payment","why6d":"Cash on delivery or online once payment keys are connected."},"product":{"sku":"SKU","brand":"Brand","buy":"Buy","add":"Add to cart","fav":"Wishlist","inStock":"In stock","out":"Out of stock","preorder":"Made to order","expected":"Incoming","notify":"Notify me","qty":"Quantity","short":"Overview","benefits":"Benefits","specs":"Specifications","kit":"In the box","usage":"Use","reviews":"Reviews","related":"You may also like","together":"Often bought together","discount":"off","compare":"Compare"},"catalog":{"title":"Catalog","found":"Found","sort":"Sort","popular":"Popularity","cheap":"Price: low to high","expensive":"Price: high to low","name":"Name","new":"New","discount":"Discount size","filters":"Filters","reset":"Reset","apply":"Apply","allBrands":"All brands","price":"Price","from":"from","to":"to","lens":"Lens","lensPlaceholder":"clear, gray, bronze","allLenses":"All lenses","lensClear":"Clear","lensGray":"Gray / smoke","lensBronze":"Bronze","lensYellow":"Yellow","lensMirror":"Mirror","lensDark":"Tinted","antiFog":"Anti-Fog","photochromic":"Photochromic","polarized":"Polarized","rxInsert":"Rx insert","interchangeable":"Interchangeable","closeFilters":"Close filters","empty":"Nothing found. Change filters or query."},"cart":{"title":"Cart","empty":"Your cart is empty","toCatalog":"Go to catalog","total":"Total","checkout":"Checkout","remove":"Remove"},"checkout":{"title":"Checkout","name":"Name","phone":"Phone","email":"Email","city":"City","delivery":"Delivery","np":"Nova Poshta","warehouse":"Branch / parcel locker","payment":"Payment","cod":"Cash on delivery","online":"Online payment","comment":"Comment","agree":"I agree to the store terms and personal data processing","submit":"Place order","success":"Order received","successText":"Order No. {n} has been received. We will contact you to confirm."},"wishlist":{"title":"Wishlist","empty":"Save products so you don\'t lose them."},"compare":{"title":"Compare","empty":"Add models to compare."},"guide":{"title":"Find glasses","q1":"What do you need glasses for?","q2":"Which lens do you need?","q3":"Do you need anti-fog?","q4":"Do you need Rx-insert compatibility?","work":"Work","auto":"Driving","moto":"Motorcycle","sport":"Sport","tourism":"Outdoors","tactical":"Tactical","shooting":"Shooting","industry":"Industry","clear":"Clear","dark":"Tinted","yellow":"Yellow","photo":"Photochromic","polar":"Polarized","unknown":"Not sure","yes":"Yes","no":"No","result":"Matching models"},"account":{"orders":"My orders","data":"Profile","addresses":"Addresses","ttn":"Tracking"},"auth":{"login":"Sign in","register":"Register","password":"Password","submit":"Sign in","create":"Create account"},"legal":{"privacy":"Privacy policy","terms":"Terms of use","cookies":"We use cookies for cart, language and analytics.","ok":"OK"},"errors":{"403":"Forbidden","404":"Page not found","500":"Something went wrong.","back":"Back to catalog"},"faqPage":{"title":"FAQ"},"footer":{"copy":"Specialist eye-protection store. Not a supplier storefront."}}');
+
+/***/ })
+
+};
+;

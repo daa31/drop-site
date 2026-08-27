@@ -1,13 +1,46 @@
 "use client";
 
+import { Heart, Minus, Plus, Share2, ShoppingBag, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "@/i18n/routing";
+import { formatPrice } from "@/lib/utils";
 
-export function ProductBuy({ id, slug, inStock }: { id: string; slug: string; inStock: boolean }) {
+function fly(button: HTMLElement, targetSelector: string, className: string) {
+  const target = document.querySelector<HTMLElement>(targetSelector);
+  if (!target) return;
+  const start = button.getBoundingClientRect();
+  const end = target.getBoundingClientRect();
+  const drop = document.createElement("span");
+  drop.className = className;
+  drop.style.left = `${start.left + start.width / 2}px`;
+  drop.style.top = `${start.top + start.height / 2}px`;
+  drop.style.setProperty("--cart-x", `${end.left + end.width / 2 - (start.left + start.width / 2)}px`);
+  drop.style.setProperty("--cart-y", `${end.top + end.height / 2 - (start.top + start.height / 2)}px`);
+  document.body.appendChild(drop);
+  window.setTimeout(() => target.classList.add("cart-bounce"), 520);
+  window.setTimeout(() => {
+    target.classList.remove("cart-bounce");
+    drop.remove();
+  }, 900);
+}
+
+export function ProductBuy({
+  id,
+  slug,
+  unitPrice,
+  locale,
+}: {
+  id: string;
+  slug: string;
+  unitPrice: number;
+  locale: string;
+}) {
   const t = useTranslations("product");
   const router = useRouter();
   const [qty, setQty] = useState(1);
+  const [shared, setShared] = useState(false);
+  const total = useMemo(() => unitPrice * qty, [unitPrice, qty]);
 
   async function add() {
     await fetch("/api/cart", {
@@ -15,64 +48,96 @@ export function ProductBuy({ id, slug, inStock }: { id: string; slug: string; in
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId: id, qty }),
     });
+    window.dispatchEvent(new CustomEvent("locko:cart-added", { detail: { qty } }));
+  }
+
+  async function share() {
+    void locale;
+    void slug;
+    const url = window.location.href;
+    const title = document.title || "Locko";
+    if (navigator.share) await navigator.share({ title, url });
+    else await navigator.clipboard.writeText(url);
+    setShared(true);
+    window.setTimeout(() => setShared(false), 1600);
   }
 
   return (
     <div className="mt-8">
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-graphite/60">{t("qty")}</span>
-        <button className="h-10 w-10 rounded-full border" onClick={() => setQty((q) => Math.max(1, q - 1))}>
-          −
-        </button>
-        <span className="w-6 text-center">{qty}</span>
-        <button className="h-10 w-10 rounded-full border" onClick={() => setQty((q) => q + 1)}>
-          +
-        </button>
+      <div className="mb-7 flex flex-wrap items-end gap-3">
+        <span className="text-4xl font-semibold">{formatPrice(total, locale)}</span>
+        {qty > 1 && <span className="pb-1 text-sm text-graphite/55">{formatPrice(unitPrice, locale)} / {t("oneItem")}</span>}
+      </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="text-sm font-medium text-graphite/60">{t("qty")}</span>
+        <div className="flex h-11 items-center rounded-full border border-black/10 bg-white">
+          <button type="button" className="grid h-11 w-11 place-items-center" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label={t("decreaseQty")}>
+            <Minus size={16} />
+          </button>
+          <span className="w-8 text-center text-sm font-semibold">{qty}</span>
+          <button type="button" className="grid h-11 w-11 place-items-center" onClick={() => setQty((q) => q + 1)} aria-label={t("increaseQty")}>
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
       <div className="mt-5 hidden gap-3 lg:flex">
         <button
-          disabled={!inStock}
-          onClick={async () => {
+          type="button"
+          onClick={async (event) => {
+            fly(event.currentTarget, "[data-cart-target]", "cart-drop");
             await add();
-            router.push("/checkout");
+            window.setTimeout(() => router.push("/checkout"), 680);
           }}
-          className="rounded-full bg-accent px-8 py-3 text-white disabled:opacity-40"
+          className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-7 text-sm font-semibold text-white transition hover:bg-accentHover"
         >
+          <Zap size={17} />
           {t("buy")}
         </button>
-        <button disabled={!inStock} onClick={add} className="rounded-full bg-ink px-8 py-3 text-white disabled:opacity-40">
+        <button
+          type="button"
+          onClick={async (event) => {
+            fly(event.currentTarget, "[data-cart-target]", "cart-drop");
+            await add();
+          }}
+          className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-7 text-sm font-semibold text-white transition hover:bg-black"
+        >
+          <ShoppingBag size={17} />
           {t("add")}
         </button>
         <button
-          onClick={() => {
-            const raw = JSON.parse(localStorage.getItem("fortis_wish") || "[]");
+          type="button"
+          onClick={(event) => {
+            fly(event.currentTarget, "[data-wishlist-target]", "wish-drop");
+            const raw = JSON.parse(localStorage.getItem("fortis_wish") || "[]") as string[];
             localStorage.setItem("fortis_wish", JSON.stringify(Array.from(new Set([...raw, slug]))));
           }}
-          className="rounded-full border px-6 py-3"
+          className="grid h-12 w-12 place-items-center rounded-full border border-black/10 bg-white transition hover:border-red-500 hover:text-red-600"
+          aria-label={t("fav")}
         >
-          {t("fav")}
+          <Heart size={18} />
         </button>
         <button
-          onClick={() => {
-            const raw = JSON.parse(localStorage.getItem("fortis_compare") || "[]");
-            const next = Array.from(new Set([...raw, slug])).slice(0, 4);
-            localStorage.setItem("fortis_compare", JSON.stringify(next));
-          }}
-          className="rounded-full border px-6 py-3"
+          type="button"
+          onClick={share}
+          className="relative grid h-12 w-12 place-items-center rounded-full border border-black/10 bg-white transition hover:border-ink"
+          aria-label={t("share")}
         >
-          {t("compare")}
+          <Share2 size={18} />
+          {shared && <span className="absolute -bottom-7 whitespace-nowrap rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-white">{t("copied")}</span>}
         </button>
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-white p-3 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white p-3 lg:hidden">
         <button
-          disabled={!inStock}
-          onClick={async () => {
+          type="button"
+          onClick={async (event) => {
+            fly(event.currentTarget, "[data-cart-target]", "cart-drop");
             await add();
-            router.push("/checkout");
+            window.setTimeout(() => router.push("/checkout"), 680);
           }}
-          className="w-full rounded-full bg-accent py-3 text-white disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-sm font-semibold text-white"
         >
-          {inStock ? t("buy") : t("out")}
+          <ShoppingBag size={17} />
+          {t("buy")} - {formatPrice(total, locale)}
         </button>
       </div>
     </div>
