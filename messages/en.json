@@ -155,6 +155,11 @@
     "catalogLink": "Back to catalog"
   },
   "wishlist": { "title": "Wishlist", "empty": "Save products so you don't lose them." },
+  "compare": {
+    "title": "Compare",
+    "empty": "Add models to compare.",
+    "remove": "Remove from compare"
+  },
   "optics": {
     "title": "Optics",
     "eyebrow": "Locko Optics",
