@@ -4,11 +4,12 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import { Heart, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Heart, Menu, Scale, Search, ShoppingBag, User, X } from "lucide-react";
 import Image from "next/image";
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { tJson } from "@/lib/utils";
 import { readWishlistSlugs, WISHLIST_EVENT } from "@/lib/wishlist";
+import { readCompareSlugs, COMPARE_EVENT } from "@/lib/compare";
 
 type Cat = { slug: string; name: unknown };
 type WishItem = { slug: string; sku: string; name: unknown; brand?: { name: string } | null; images?: { url: string }[] };
@@ -34,6 +35,7 @@ export function Header({
   const [cartItems, setCartItems] = useState(cartCount);
   const [wishOpen, setWishOpen] = useState(false);
   const [wishItems, setWishItems] = useState<WishItem[]>([]);
+  const [compareCount, setCompareCount] = useState(0);
   const path = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -51,6 +53,15 @@ export function Header({
     }
     window.addEventListener("locko:cart-added", update);
     return () => window.removeEventListener("locko:cart-added", update);
+  }, []);
+
+  useEffect(() => {
+    function syncCompare() {
+      setCompareCount(readCompareSlugs().length);
+    }
+    syncCompare();
+    window.addEventListener(COMPARE_EVENT, syncCompare);
+    return () => window.removeEventListener(COMPARE_EVENT, syncCompare);
   }, []);
 
   async function openWishlist() {
@@ -186,6 +197,14 @@ export function Header({
           <Link href="/brands" className="rounded-full px-4 py-2 hover:bg-white">
             {t("brands")}
           </Link>
+          <Link href="/compare" className="relative rounded-full px-4 py-2 hover:bg-white">
+            {t("compare")}
+            {compareCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-blue-600 px-1 text-[9px] font-semibold text-white">
+                {compareCount}
+              </span>
+            )}
+          </Link>
         </nav>
         <div className="relative mx-auto hidden w-full max-w-lg md:block" ref={box}>
           <form
@@ -251,6 +270,14 @@ export function Header({
           <button type="button" onClick={openWishlist} data-wishlist-target className="focus-ring grid h-10 w-10 place-items-center rounded-full bg-white" aria-label={t("wishlist")}>
             <Heart size={19} />
           </button>
+          <Link href="/compare" className="focus-ring relative grid h-10 w-10 place-items-center rounded-full bg-white" aria-label={t("compare")}>
+            <Scale size={19} />
+            {compareCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-semibold text-white">
+                {compareCount}
+              </span>
+            )}
+          </Link>
           <Link href={accountHref} data-account-link className="focus-ring grid h-10 w-10 place-items-center rounded-full bg-white" aria-label={t("account")}>
             <User size={19} />
           </Link>
@@ -314,6 +341,14 @@ export function Header({
                 </Link>
                 <Link href="/brands" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
                   {t("brands")}
+                </Link>
+                <Link href="/compare" onClick={() => setMenu(false)} className="flex items-center justify-between rounded-lg bg-white px-4 py-3">
+                  <span>{t("compare")}</span>
+                  {compareCount > 0 && (
+                    <span className="grid h-6 min-w-6 place-items-center rounded-full bg-blue-600 px-1.5 text-[10px] font-semibold text-white">
+                      {compareCount}
+                    </span>
+                  )}
                 </Link>
                 <Link href="/delivery" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
                   {t("delivery")}
