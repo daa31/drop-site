@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { toCard } from "@/lib/catalog";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductBuy } from "@/components/ProductBuy";
+import { RecentlyTracker } from "@/components/RecentlyTracker";
 import { BadgeCheck, PackageCheck, ShieldCheck, Truck } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -331,6 +332,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
 
   return (
     <div className="pb-24 lg:pb-16">
+      <RecentlyTracker slug={product.slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { tJson } from "@/lib/utils";
 import { Link } from "@/i18n/routing";
+import { setCompareSlug } from "@/lib/compare";
+import { X } from "lucide-react";
 
 type P = {
   slug: string;
@@ -66,6 +68,10 @@ export default function ComparePage() {
       setItems(rows.filter(Boolean)),
     );
   }, []);
+  function removeItem(slug: string) {
+    setCompareSlug(slug, false);
+    setItems((current) => current.filter((item) => item.slug !== slug));
+  }
   const keys = Array.from(new Set(items.flatMap((i) => Object.keys(i.attributes || {}))));
   if (!items.length)
     return (
@@ -85,7 +91,7 @@ export default function ComparePage() {
           <tr>
             <th />
             {items.map((i) => (
-              <th key={i.slug} className="w-[200px] p-3 text-left">
+              <th key={i.slug} className="relative w-[200px] p-3 text-left">
                 <Link href={`/product/${i.slug}`} className="block hover:opacity-80">
                   <div className="relative mb-2 aspect-square w-full overflow-hidden rounded-lg bg-[#eef0ed]">
                     {i.images?.[0]?.url ? (
@@ -96,6 +102,14 @@ export default function ComparePage() {
                   </div>
                   <span className="text-sm font-semibold leading-snug">{tJson(i.name, locale)}</span>
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => removeItem(i.slug)}
+                  className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white transition hover:bg-black aria-label-viewport"
+                  aria-label={t("remove")}
+                >
+                  <X size={16} />
+                </button>
               </th>
             ))}
           </tr>
