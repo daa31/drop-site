@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import type { Order, OrderItem, Customer } from "@prisma/client";
-import { formatPrice } from "./utils";
+import { formatPrice, publicSiteBase } from "./utils";
 import { normalizeLocale } from "./localization";
 
 export type MailResult = {
@@ -221,17 +221,6 @@ function deliveryMethodLabel(method: string, locale: string) {
   return method || "Нова пошта";
 }
 
-function cleanBaseUrl(value?: string | null) {
-  const raw = value?.trim();
-  if (!raw) return "";
-  try {
-    const url = new URL(raw);
-    return `${url.origin}${url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "")}`;
-  } catch {
-    return "";
-  }
-}
-
 function customerOrderPublicUrl(order: OrderWithMailData, baseUrl: string) {
   const token = order.publicToken;
   if (!token) return "";
@@ -395,7 +384,7 @@ export async function sendOrderCustomerEmail({
   const locale = normalizeLocale(order.locale);
   const c = customerMailCopy(locale);
   const subject = c.subject(order.number);
-  const publicUrl = customerOrderPublicUrl(order, cleanBaseUrl(settings.site_url) || process.env.NEXT_PUBLIC_SITE_URL?.trim() || "");
+  const publicUrl = customerOrderPublicUrl(order, publicSiteBase(settings));
   const text = [
     c.subject(order.number),
     "",

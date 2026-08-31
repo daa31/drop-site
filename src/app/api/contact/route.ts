@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requestBaseUrl } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
     },
   });
   const referer = req.headers.get("referer") || "";
-  const locale = referer.match(/^\/(uk|ru|en)(?:\/|$)/)?.[1] || "uk";
-  return NextResponse.redirect(new URL(`/${locale}/contacts?sent=1`, req.nextUrl.origin), 303);
+  let locale = "uk";
+  try {
+    locale = new URL(referer).pathname.match(/^\/(uk|ru|en)(?:\/|$)/)?.[1] || "uk";
+  } catch {}
+  return NextResponse.redirect(new URL(`/${locale}/contacts?sent=1`, `${requestBaseUrl(req)}/`), 303);
 }

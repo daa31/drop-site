@@ -4,17 +4,7 @@ import { getSession } from "@/lib/auth";
 import { CUSTOMER_CANCELABLE_STATUSES, orderStatusLabel, normalizeLocale } from "@/lib/localization";
 import { siteSettings } from "@/lib/settings";
 import { sendOrderCancelledEmails } from "@/lib/email";
-
-function cleanBaseUrl(value?: string | null) {
-  const raw = value?.trim();
-  if (!raw) return "";
-  try {
-    const url = new URL(raw);
-    return `${url.origin}${url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "")}`;
-  } catch {
-    return "";
-  }
-}
+import { publicSiteBase, requestBaseUrl } from "@/lib/utils";
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -95,9 +85,7 @@ await prisma.order.update({
   void (async () => {
     try {
       const settings = await siteSettings();
-      const requestOrigin = cleanBaseUrl(req.nextUrl.origin);
-      const configured = cleanBaseUrl(settings.site_url || process.env.NEXT_PUBLIC_SITE_URL);
-      const base = configured || requestOrigin || "http://localhost:3001";
+      const base = publicSiteBase(settings) || requestBaseUrl(req) || "http://localhost:3001";
       const adminUrl = new URL(`/admin/orders/${id}`, `${base}/`).toString();
       const fresh = await prisma.order.findUnique({ where: { id }, include: { customer: true, items: true } });
       if (!fresh) return;

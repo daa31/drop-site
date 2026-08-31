@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { getCart, setCart } from "@/lib/cart";
 import { getSession } from "@/lib/auth";
 import { formatOrderTelegram, notifyTelegram } from "@/lib/telegram";
-import { tJson } from "@/lib/utils";
+import { tJson, publicSiteBase, requestBaseUrl } from "@/lib/utils";
 import { siteSettings } from "@/lib/settings";
 import { sendOrderNotificationEmail } from "@/lib/email";
 import { normalizeLocale, orderStatusLabel } from "@/lib/localization";
@@ -25,22 +25,8 @@ const schema = z.object({
   agree: z.literal(true).or(z.string()),
 });
 
-function cleanBaseUrl(value?: string | null) {
-  const raw = value?.trim();
-  if (!raw) return "";
-  try {
-    const url = new URL(raw);
-    return `${url.origin}${url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "")}`;
-  } catch {
-    return "";
-  }
-}
-
 function orderAdminUrl(req: NextRequest, settings: Record<string, string>, orderId: string) {
-  const requestOrigin = cleanBaseUrl(req.nextUrl.origin);
-  const configured = cleanBaseUrl(settings.site_url || process.env.NEXT_PUBLIC_SITE_URL);
-  const staleDefaultLocalhost = configured === "http://localhost:3000" && requestOrigin && requestOrigin !== configured;
-  const base = configured && !staleDefaultLocalhost ? configured : requestOrigin || "http://localhost:3001";
+  const base = publicSiteBase(settings) || requestBaseUrl(req) || "http://localhost:3001";
   return new URL(`/admin/orders/${orderId}`, `${base}/`).toString();
 }
 

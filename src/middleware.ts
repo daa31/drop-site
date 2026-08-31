@@ -1,6 +1,7 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
+import { requestBaseUrl } from "./lib/utils";
 
 const intl = createMiddleware(routing);
 
@@ -25,10 +26,9 @@ export function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const localeAdmin = path.match(/^\/(uk|ru|en)\/admin(?=\/|$)(.*)$/);
-  if (localeAdmin) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/admin${localeAdmin[2] || ""}`;
-    return NextResponse.redirect(url);
+if (localeAdmin) {
+    const target = `/admin${localeAdmin[2] || ""}`;
+    return NextResponse.redirect(new URL(target, `${requestBaseUrl(request)}/`));
   }
 
   if (path.startsWith("/api/") || path.startsWith("/admin")) {

@@ -45,3 +45,42 @@ export function roundPrice(value: number, mode: string = "99") {
   if (mode === "50") return Math.ceil(value / 50) * 50;
   return Math.ceil(value / 10) * 10 - 1;
 }
+
+export function cleanBaseUrl(value?: string | null) {
+  const raw = value?.trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    return `${url.origin}${url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "")}`;
+  } catch {
+    return "";
+  }
+}
+
+export function isLocalBaseUrl(value: string) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(value);
+}
+
+export function publicSiteBase(settings?: Record<string, string>) {
+  const candidates = [
+    cleanBaseUrl(settings?.site_url),
+    cleanBaseUrl(process.env.NEXT_PUBLIC_SITE_URL),
+  ].filter(Boolean);
+  return candidates.find((c) => !isLocalBaseUrl(c)) || candidates[0] || "";
+}
+
+type BaseUrlRequest = {
+  nextUrl: { origin: string };
+  headers: { get(name: string): string | null };
+};
+
+export function requestBaseUrl(req: BaseUrlRequest) {
+  const env = cleanBaseUrl(process.env.NEXT_PUBLIC_SITE_URL);
+  if (env && !isLocalBaseUrl(env)) return env;
+  const proto = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const host =
+    req.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    req.headers.get("host")?.trim();
+  if (proto && host) return `${proto}://${host}`;
+  return env || req.nextUrl.origin;
+}
