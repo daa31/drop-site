@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { BackButton } from "@/components/BackButton";
 import { CookieBanner } from "@/components/CookieBanner";
 import { Analytics } from "@/components/Analytics";
 import { prisma } from "@/lib/db";
@@ -42,7 +43,10 @@ export default async function LocaleLayout({
         user={session}
       />
       <div className="h-[128px] md:h-[72px]" aria-hidden="true" />
-      <main className="min-h-[70vh]">{children}</main>
+      <main className="min-h-[70vh]">
+        <BackButton />
+        {children}
+      </main>
       <Footer locale={locale} settings={settings} />
       <CookieBanner />
       <Analytics

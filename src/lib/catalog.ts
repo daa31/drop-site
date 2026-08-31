@@ -113,6 +113,7 @@ export async function listProducts(opts: {
   polar?: string;
   rx?: string;
   interchangeable?: string;
+  sale?: string;
   page?: number;
   take?: number;
   locale?: string;
@@ -121,6 +122,9 @@ export async function listProducts(opts: {
   const page = opts.page ?? 1;
   const start = (page - 1) * take;
   const where: Record<string, unknown> = { isActive: true };
+  if (opts.sale === "1") {
+    where.oldPrice = { not: null };
+  }
   if (opts.category) {
     where.categories = { some: { category: { slug: opts.category } } };
   }

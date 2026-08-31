@@ -91,6 +91,7 @@ export default async function CatalogPage({
     polar: String(sp.polar || ""),
     rx: String(sp.rx || ""),
     interchangeable: String(sp.il || ""),
+    sale: String(sp.sale || ""),
     brand: String(sp.brand || ""),
     page,
     locale,

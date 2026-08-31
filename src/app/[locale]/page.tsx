@@ -367,7 +367,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       {sale.length > 0 && (
         <section className="container-f pb-4">
           <Link
-            href="/catalog?sort=discount"
+            href="/catalog?sale=1&sort=discount"
             className="group relative flex min-h-40 flex-col justify-center overflow-hidden rounded-lg bg-gradient-to-r from-red-600 via-red-500 to-orange-500 px-6 text-white shadow-card sm:px-10"
           >
             <div className="absolute -right-6 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
