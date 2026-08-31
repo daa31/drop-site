@@ -79,7 +79,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const h = await getTranslations({ locale, namespace: "hero" });
   const copy = localCopy(locale);
 
-  const [categories, hits, sale, neu, productsCount, banners, productImages] = await Promise.all([
+  const [categories, hits, sale, neu, productsCount, banners, productsWithImages] = await Promise.all([
     prisma.category.findMany({
       where: { products: { some: { product: { isActive: true, images: { some: {} } } } } },
       orderBy: { sortOrder: "asc" },
@@ -113,9 +113,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       where: { active: true, slot: { startsWith: "home_hero" } },
       orderBy: [{ sortOrder: "asc" }, { slot: "asc" }],
     }),
-    prisma.productImage.findMany({
-      where: { product: { isActive: true } },
-      orderBy: { sortOrder: "asc" },
+    prisma.product.findMany({
+      where: { isActive: true, images: { some: {} } },
+      include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
     }),
   ]);
   const heroBanner = banners.find((banner) => banner.slot === "home_hero");
@@ -127,7 +127,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const activeHeroImages =
     bannerHeroImages.length >= 3
       ? bannerHeroImages.slice(0, 3)
-      : randomHeroImages(productImages.map((img) => img.url));
+      : randomHeroImages(productsWithImages.map((product) => product.images[0]?.url));
   const heroTitle = tJson(heroBanner?.title, locale) || h("title");
   const heroSubtitle = tJson(heroBanner?.subtitle, locale) || h("subtitle");
   const heroHref = heroBanner?.href || "/catalog";
@@ -180,7 +180,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <img
                 src={image}
                 alt=""
-                className="h-full w-full object-cover opacity-88"
+                className="h-full w-full scale-[0.82] object-contain opacity-85"
                 loading={index === 0 ? "eager" : "lazy"}
                 decoding="async"
               />
