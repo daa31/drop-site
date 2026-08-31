@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { tJson } from "@/lib/utils";
 import { toCard } from "@/lib/catalog";
 import { ProductCard } from "@/components/ProductCard";
+import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { ArrowRight, BadgeCheck, CreditCard, Glasses, Headphones, Shield, Sparkles, Truck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -109,7 +110,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       take: 8,
     }),
     prisma.product.findMany({
-      where: { isActive: true, isSale: true },
+      where: { isActive: true, oldPrice: { not: null } },
       include: { brand: true, images: { take: 1 } },
       orderBy: { discountPercent: "desc" },
       take: 4,
@@ -363,6 +364,25 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         </div>
       </section>
 
+      {sale.length > 0 && (
+        <section className="container-f pb-4">
+          <Link
+            href="/catalog?sort=discount"
+            className="group relative flex min-h-40 flex-col justify-center overflow-hidden rounded-lg bg-gradient-to-r from-red-600 via-red-500 to-orange-500 px-6 text-white shadow-card sm:px-10"
+          >
+            <div className="absolute -right-6 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+            <div className="relative max-w-2xl">
+              <p className="text-xs uppercase tracking-[0.24em] text-white/75">{t("saleLabel")}</p>
+              <h2 className="mt-2 font-display text-3xl leading-tight sm:text-4xl">{t("saleBannerTitle")}</h2>
+              <p className="mt-2 text-sm text-white/85">{t("saleBannerText")}</p>
+              <span className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-red-600 transition group-hover:gap-3">
+                {t("saleCta")} <ArrowRight size={16} />
+              </span>
+            </div>
+          </Link>
+        </section>
+      )}
+
       {(sale.length > 0 || neu.length > 0) && (
         <section className="container-f py-16">
           <div className="grid gap-10 lg:grid-cols-2">
@@ -393,6 +413,8 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </div>
         </section>
       )}
+
+      <RecentlyViewed />
     </>
   );
 }
