@@ -4,6 +4,10 @@ import { Building2, CreditCard, LoaderCircle, MapPin, MessageCircle, MessageSqua
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/routing";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { honeypotField, HONEYPOT_NAME } from "@/lib/honeypot";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
 
 type FieldName = "name" | "surname" | "patronymic" | "phone" | "email" | "telegram" | "city" | "warehouse" | "agree";
 type FieldErrors = Partial<Record<FieldName, string>>;
@@ -34,6 +38,15 @@ const DEFAULT_CITIES = [
   { uk: "Миколаїв", ru: "Николаев", en: "Mykolaiv" },
   { uk: "Кривий Ріг", ru: "Кривой Рог", en: "Kryvyi Rih" },
   { uk: "Кропивницький", ru: "Кропивницкий", en: "Kropyvnytskyi" },
+  { uk: "Херсон", ru: "Херсон", en: "Kherson" },
+  { uk: "Маріуполь", ru: "Мариуполь", en: "Mariupol" },
+  { uk: "Біла Церква", ru: "Белая Церковь", en: "Bila Tserkva" },
+  { uk: "Кременчук", ru: "Кременчуг", en: "Kremenchuk" },
+  { uk: "Кам'янець-Подільський", ru: "Каменец-Подольский", en: "Kamianets-Podilskyi" },
+  { uk: "Сєвєродонецьк", ru: "Северодонецк", en: "Sievierodonetsk" },
+  { uk: "Лисичанськ", ru: "Лисичанск", en: "Lysychansk" },
+  { uk: "Умань", ru: "Умань", en: "Uman" },
+  { uk: "Нікополь", ru: "Никополь", en: "Nikopol" },
 ];
 
 function cityName(city: (typeof DEFAULT_CITIES)[number], locale: string) {
@@ -116,6 +129,7 @@ function localCopy(locale: string) {
         warehouse: "Введите отделение или почтомат.",
         telegram: "Укажите Telegram или включите «Не связываться со мной».",
         agree: "Нужно согласиться с условиями.",
+        turnstile: "Подтвердите, что вы не робот.",
       },
     };
   }
@@ -146,6 +160,7 @@ function localCopy(locale: string) {
         warehouse: "Enter a branch or parcel locker.",
         telegram: "Enter your Telegram or enable \"Don't contact me\".",
         agree: "You need to accept the terms.",
+        turnstile: "Please confirm you are not a robot.",
       },
     };
   }
@@ -175,6 +190,7 @@ function localCopy(locale: string) {
       warehouse: "Введіть відділення або поштомат.",
       telegram: "Вкажіть Telegram або увімкніть «Не зв'язуватись зі мною».",
       agree: "Потрібно погодитися з умовами.",
+      turnstile: "Підтвердіть, що ви не робот.",
     },
   };
 }
@@ -197,6 +213,8 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
   const [showWarehouseOptions, setShowWarehouseOptions] = useState(false);
   const [warehouseLoading, setWarehouseLoading] = useState(false);
   const [noContact, setNoContact] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRequired = TURNSTILE_SITE_KEY.length > 0;
   const [phone, setPhone] = useState("");
   const copy = localCopy(locale);
 
@@ -354,6 +372,10 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
           focusFirstError(clientErrors);
           return;
         }
+        if (turnstileRequired && !turnstileToken) {
+          setGeneralError(copy.invalid.turnstile || copy.server);
+          return;
+        }
 
         setSubmitting(true);
         let keepButtonLocked = false;
@@ -378,6 +400,8 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
               comment: fd.get("comment"),
               locale,
               agree: fd.get("agree") === "on",
+              [HONEYPOT_NAME]: fd.get(HONEYPOT_NAME) || "",
+              turnstileToken,
             }),
           });
           const data = await res.json().catch(() => ({}));
@@ -683,6 +707,15 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
         </label>
         {errorFor("agree")}
       </div>
+      {honeypotField()}
+      {turnstileRequired && (
+        <div>
+          <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTurnstileToken} />
+          {!turnstileToken && generalError && (
+            <p className="mt-1 text-xs text-red-600">{copy.invalid.turnstile}</p>
+          )}
+        </div>
+      )}
       {generalError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{generalError}</p>}
       <button
         type="submit"

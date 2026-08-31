@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { requestBaseUrl } from "@/lib/utils";
 import { siteSettings } from "@/lib/settings";
 import { sendMail, type MailResult } from "@/lib/email";
+import { isHoneypotFilled } from "@/lib/honeypot";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 function escapeHtml(value: string) {
   return value
@@ -14,6 +16,22 @@ function escapeHtml(value: string) {
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
+  const body: Record<string, string> = {};
+  for (const [key, value] of form.entries()) {
+    if (typeof value === "string") body[key] = value;
+  }
+
+  if (isHoneypotFilled(body)) {
+    return NextResponse.json({ ok: true });
+  }
+
+  const realIp =
+    req.headers.get("x-real-ip")?.trim() ||
+    req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ||
+    undefined;
+  const human = await verifyTurnstile(body.turnstileToken, realIp);
+  if (!human) return NextResponse.json({ error: "captcha" }, { status: 403 });
+
   const name = String(form.get("name") || "").trim();
   const email = String(form.get("email") || "").trim();
   const message = String(form.get("message") || "").trim();

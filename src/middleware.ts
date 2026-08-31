@@ -5,28 +5,63 @@ import { requestBaseUrl } from "./lib/utils";
 
 const intl = createMiddleware(routing);
 
-const RATE: Record<string, { n: number; t: number }> = {};
+/* In-memory sliding-window rate limiter per client IP.
+   Kanîa IPC: the map is bounded and entries expire so this cannot grow unbounded. */
+const RATE = new Map<string, { n: number; t: number }>();
+let lastSweep = 0;
 
-function rateLimit(ip: string, limit = 80, windowMs = 60_000) {
+function rateLimit(ip: string, limit = 120, windowMs = 60_000) {
   const now = Date.now();
-  const rec = RATE[ip];
+  if (now - lastSweep > 60_000) {
+    lastSweep = now;
+    for (const [key, rec] of RATE) {
+      if (now - rec.t > windowMs) RATE.delete(key);
+    }
+  }
+  const rec = RATE.get(ip);
   if (!rec || now - rec.t > windowMs) {
-    RATE[ip] = { n: 1, t: now };
+    RATE.set(ip, { n: 1, t: now });
     return true;
   }
   rec.n += 1;
   return rec.n <= limit;
 }
 
+/* Best-effort client IP. nginx always sets X-Real-IP to $remote_addr which a
+   client cannot spoof, so we trust it over the user-supplied X-Forwarded-For. */
+function clientIp(request: NextRequest): string {
+  const real = request.headers.get("x-real-ip");
+  if (real) return real.trim();
+  const fwd = request.headers.get("x-forwarded-for");
+  if (fwd) {
+    const parts = fwd.split(",").map((p) => p.trim()).filter(Boolean);
+    return parts[parts.length - 1];
+  }
+  return "local";
+}
+
+/* Stricter limits for abuse-prone write endpoints. */
+const STRICT_LIMIT = 20;
+
 export function middleware(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (request.nextUrl.pathname.startsWith("/api/") && !rateLimit(ip)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  const ip = clientIp(request);
+  const path = request.nextUrl.pathname;
+
+  if (path.startsWith("/api/")) {
+    const strict = /\/api\/(orders|reviews)/.test(path) && request.method === "POST";
+    const ok = rateLimit(ip, strict ? STRICT_LIMIT : 120);
+    if (!ok) {
+      const status = 429;
+      const retry = 60;
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status, headers: { "Retry-After": String(retry) } },
+      );
+    }
   }
 
-  const path = request.nextUrl.pathname;
   const localeAdmin = path.match(/^\/(uk|ru|en)\/admin(?=\/|$)(.*)$/);
-if (localeAdmin) {
+  if (localeAdmin) {
     const target = `/admin${localeAdmin[2] || ""}`;
     return NextResponse.redirect(new URL(target, `${requestBaseUrl(request)}/`));
   }

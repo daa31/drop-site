@@ -9,6 +9,8 @@ import { tJson, publicSiteBase, requestBaseUrl } from "@/lib/utils";
 import { siteSettings } from "@/lib/settings";
 import { sendOrderNotificationEmail } from "@/lib/email";
 import { normalizeLocale, orderStatusLabel } from "@/lib/localization";
+import { isHoneypotFilled, HONEYPOT_NAME } from "@/lib/honeypot";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -25,6 +27,8 @@ const schema = z.object({
   comment: z.string().max(500).optional(),
   locale: z.string().optional(),
   agree: z.literal(true).or(z.string()),
+  turnstileToken: z.string().optional().nullable(),
+  website: z.string().optional(),
 });
 
 function orderAdminUrl(req: NextRequest, settings: Record<string, string>, orderId: string) {
@@ -44,6 +48,19 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 },
       );
+    }
+
+    if (isHoneypotFilled(body)) {
+      return NextResponse.json({ ok: true });
+    }
+
+    const realIp =
+      req.headers.get("x-real-ip")?.trim() ||
+      req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ||
+      undefined;
+    const human = await verifyTurnstile(parsed.data.turnstileToken, realIp);
+    if (!human) {
+      return NextResponse.json({ error: "captcha" }, { status: 403 });
     }
 
     const telegram = parsed.data.telegram?.trim() || "";

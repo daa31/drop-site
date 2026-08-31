@@ -1,5 +1,6 @@
 import { siteSettings } from "@/lib/settings";
 import { normalizeLocale, tr } from "@/lib/localization";
+import { ContactForm } from "@/components/ContactForm";
 
 const COPY = {
   title: { uk: "Контакти", ru: "Контакты", en: "Contacts" },
@@ -34,13 +35,7 @@ export default async function Contacts({
         <p>{s.telegram}</p>
         <p>{s.hours}</p>
       </div>
-      {sent && <p className="mt-8 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{tr(COPY.sent, locale)}</p>}
-      <form className="mt-10 grid gap-3" action="/api/contact" method="post">
-        <input name="name" required placeholder={tr(COPY.name, locale)} className="rounded-xl border px-4 py-3" />
-        <input name="email" type="email" required placeholder={tr(COPY.replyEmail, locale)} className="rounded-xl border px-4 py-3" />
-        <textarea name="message" required placeholder={tr(COPY.message, locale)} className="rounded-xl border px-4 py-3" rows={5} />
-        <button className="rounded-full bg-ink py-3 text-white">{tr(COPY.submit, locale)}</button>
-      </form>
+      <ContactForm sent={sent} />
     </div>
   );
 }
