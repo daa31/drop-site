@@ -8,6 +8,17 @@ import { ArrowRight, BadgeCheck, CreditCard, Glasses, Headphones, Shield, Sparkl
 
 export const dynamic = "force-dynamic";
 
+const GLASSES_CATEGORIES = [
+  "zakhysni-okuliary",
+  "okuliary-z-ushchilniuachem",
+  "zi-zminnymy-linzamy",
+  "fotokhromni-okuliary",
+  "poliaryzatsiini-okuliary",
+  "okuliary-dlia-vodiiv",
+  "dioptrychni-rishennia",
+  "taktychni-okuliary",
+];
+
 const collectionImages = [
   "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=1200&q=82",
   "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=1200&q=82",
@@ -114,7 +125,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       orderBy: [{ sortOrder: "asc" }, { slot: "asc" }],
     }),
     prisma.product.findMany({
-      where: { isActive: true, images: { some: {} } },
+      where: { isActive: true, images: { some: {} }, categories: { some: { category: { slug: { in: GLASSES_CATEGORIES } } } } },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
     }),
   ]);
