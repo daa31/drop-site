@@ -44,6 +44,29 @@ button {
   font: inherit;
 }
 
+a,
+button,
+input,
+textarea,
+select {
+  transition-duration: 180ms;
+  transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+button:not(:disabled):active,
+a:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  pointer-events: none;
+}
+
+.page-transition {
+  animation: page-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .container-f {
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6;
 }
@@ -107,5 +130,49 @@ button {
   }
   72% {
     transform: translateY(2px) scale(0.98);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.catalog-item {
+  animation: catalog-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes catalog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+
+  .page-transition {
+    animation: none;
   }
 }

@@ -9,7 +9,8 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique
+  email         String?   @unique
+  username      String?   @unique
   passwordHash  String
   name          String
   phone         String?
@@ -81,9 +82,10 @@ model Product {
   attributes           Json
   weightGrams          Int?
   dimensions           String?
-  supplierPrice        Float
-  retailPrice          Float
-  oldPrice             Float?
+supplierPrice        Float
+    retailPrice          Float
+    rrc                  Float?
+    oldPrice             Float?
   minimumRetailPrice   Float?
   discountPercent      Float    @default(0)
   customRetailPrice    Float?
@@ -175,6 +177,7 @@ model Customer {
 model Order {
   id               String      @id @default(cuid())
   number           Int         @unique
+  publicToken      String?     @unique
   userId           String?
   user             User?       @relation(fields: [userId], references: [id])
   customerId       String?
@@ -347,4 +350,15 @@ model RateLimit {
   key       String   @unique
   count     Int      @default(0)
   windowEnd DateTime
+}
+
+model VerificationCode {
+  id        String    @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
 }

@@ -32,7 +32,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   if (!body.productId) return NextResponse.json({ error: "productId" }, { status: 400 });
-  const product = await prisma.product.findFirst({ where: { id: String(body.productId), isActive: true }, select: { id: true } });
+  const product = await prisma.product.findFirst({
+    where: { id: String(body.productId), isActive: true, stockStatus: "in_stock", stock: { gt: 0 } },
+    select: { id: true },
+  });
   if (!product) return NextResponse.json({ error: "not_found" }, { status: 404 });
   await addToCart(product.id, Math.max(1, Math.min(99, Number(body.qty || 1))));
   return NextResponse.json({ ok: true });

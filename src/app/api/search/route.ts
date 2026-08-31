@@ -5,7 +5,7 @@ import { tJson } from "@/lib/utils";
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") || "";
   const locale = req.nextUrl.searchParams.get("locale") || "uk";
-  const items = await searchProducts(q, locale, 8);
+  const items = await searchProducts(q, locale, 6);
   return NextResponse.json({
     items: items.map((p) => ({
       slug: p.slug,

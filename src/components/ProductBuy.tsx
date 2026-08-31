@@ -1,10 +1,10 @@
 "use client";
 
-import { Heart, Minus, Plus, Share2, ShoppingBag, Zap } from "lucide-react";
+import { Heart, Minus, Plus, Share2, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
-import { useRouter } from "@/i18n/routing";
+import { useEffect, useMemo, useState } from "react";
 import { formatPrice } from "@/lib/utils";
+import { readWishlistSlugs, setWishlistSlug, WISHLIST_EVENT } from "@/lib/wishlist";
 
 function fly(button: HTMLElement, targetSelector: string, className: string) {
   const target = document.querySelector<HTMLElement>(targetSelector);
@@ -30,19 +30,32 @@ export function ProductBuy({
   slug,
   unitPrice,
   locale,
+  canOrder = true,
 }: {
   id: string;
   slug: string;
   unitPrice: number;
   locale: string;
+  canOrder?: boolean;
 }) {
   const t = useTranslations("product");
-  const router = useRouter();
   const [qty, setQty] = useState(1);
   const [shared, setShared] = useState(false);
+  const [isWished, setIsWished] = useState(false);
   const total = useMemo(() => unitPrice * qty, [unitPrice, qty]);
 
+  useEffect(() => {
+    function syncWishlistState() {
+      setIsWished(readWishlistSlugs().includes(slug));
+    }
+
+    syncWishlistState();
+    window.addEventListener(WISHLIST_EVENT, syncWishlistState);
+    return () => window.removeEventListener(WISHLIST_EVENT, syncWishlistState);
+  }, [slug]);
+
   async function add() {
+    if (!canOrder) return;
     await fetch("/api/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,38 +96,30 @@ export function ProductBuy({
       <div className="mt-5 hidden gap-3 lg:flex">
         <button
           type="button"
-          onClick={async (event) => {
-            fly(event.currentTarget, "[data-cart-target]", "cart-drop");
-            await add();
-            window.setTimeout(() => router.push("/checkout"), 680);
-          }}
-          className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-7 text-sm font-semibold text-white transition hover:bg-accentHover"
-        >
-          <Zap size={17} />
-          {t("buy")}
-        </button>
-        <button
-          type="button"
+          disabled={!canOrder}
           onClick={async (event) => {
             fly(event.currentTarget, "[data-cart-target]", "cart-drop");
             await add();
           }}
-          className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-7 text-sm font-semibold text-white transition hover:bg-black"
+          className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-7 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-graphite/35"
         >
           <ShoppingBag size={17} />
-          {t("add")}
+          {canOrder ? t("add") : t("out")}
         </button>
         <button
           type="button"
           onClick={(event) => {
             fly(event.currentTarget, "[data-wishlist-target]", "wish-drop");
-            const raw = JSON.parse(localStorage.getItem("fortis_wish") || "[]") as string[];
-            localStorage.setItem("fortis_wish", JSON.stringify(Array.from(new Set([...raw, slug]))));
+            const change = setWishlistSlug(slug, true);
+            setIsWished(change.added);
           }}
-          className="grid h-12 w-12 place-items-center rounded-full border border-black/10 bg-white transition hover:border-red-500 hover:text-red-600"
+          className={`grid h-12 w-12 place-items-center rounded-full border bg-white transition hover:border-red-500 hover:text-red-600 ${
+            isWished ? "border-red-500 text-red-600" : "border-black/10"
+          }`}
           aria-label={t("fav")}
+          aria-pressed={isWished}
         >
-          <Heart size={18} />
+          <Heart size={18} fill={isWished ? "currentColor" : "none"} />
         </button>
         <button
           type="button"
@@ -129,15 +134,15 @@ export function ProductBuy({
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white p-3 lg:hidden">
         <button
           type="button"
+          disabled={!canOrder}
           onClick={async (event) => {
             fly(event.currentTarget, "[data-cart-target]", "cart-drop");
             await add();
-            window.setTimeout(() => router.push("/checkout"), 680);
           }}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-sm font-semibold text-white"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-ink text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-graphite/35"
         >
           <ShoppingBag size={17} />
-          {t("buy")} - {formatPrice(total, locale)}
+          {canOrder ? `${t("add")} - ${formatPrice(total, locale)}` : t("out")}
         </button>
       </div>
     </div>

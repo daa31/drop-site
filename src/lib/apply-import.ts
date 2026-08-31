@@ -20,6 +20,7 @@ export async function applyImportRows(rows: ImportRow[], opts: ApplyOptions) {
       retailPrice: true,
       supplierPrice: true,
       customRetailPrice: true,
+      rrc: true,
       marginPctOverride: true,
       minimumRetailPrice: true,
     },
@@ -36,31 +37,21 @@ export async function applyImportRows(rows: ImportRow[], opts: ApplyOptions) {
   let oos = 0;
   let skipped = 0;
 
-  for (const row of rows) {
+for (const row of rows) {
     const found = bySku.get(row.sku);
-    const importedRetail = row.mrp ?? row.supplier_price;
-    const supplier = found?.supplierPrice ?? row.supplier_price ?? importedRetail ?? 0;
-    const mrp = row.mrp ?? row.supplier_price ?? found?.minimumRetailPrice ?? supplier;
-    const price =
-      importedRetail != null
-        ? {
-            supplierPrice: supplier,
-            retailPrice: found?.customRetailPrice ?? importedRetail,
-            oldPrice: row.old_price && row.old_price > importedRetail ? row.old_price : null,
-            discountPercent: row.old_price && row.old_price > importedRetail ? Math.round(((row.old_price - importedRetail) / row.old_price) * 100) : 0,
-            marginPct: supplier ? ((importedRetail - supplier) / importedRetail) * 100 : 0,
-            belowMrp: false,
-            mrp,
-          }
-        : computeRetail({
-            supplierPrice: supplier,
-            defaultMargin: settings.defaultMargin,
-            productMargin: found?.marginPctOverride,
-            customRetail: found?.customRetailPrice,
-            rounding: settings.rounding,
-            mrp,
-            oldPrice: row.old_price ?? null,
-          });
+    const supplier = found?.supplierPrice ?? row.supplier_price ?? 0;
+    const rrc = found?.rrc ?? null;
+    const mrp = row.mrp ?? found?.minimumRetailPrice ?? null;
+    const price = computeRetail({
+      supplierPrice: supplier,
+      defaultMargin: settings.defaultMargin,
+      productMargin: found?.marginPctOverride,
+      customRetail: found?.customRetailPrice,
+      rrc,
+      rounding: settings.rounding,
+      mrp,
+      oldPrice: row.old_price ?? null,
+    });
 
     const stock = row.stock;
     const stockStatus =
@@ -135,6 +126,7 @@ export async function applyImportRows(rows: ImportRow[], opts: ApplyOptions) {
         retailPrice: p.retailPrice,
         supplierPrice: p.supplierPrice,
         customRetailPrice: p.customRetailPrice,
+        rrc: p.rrc,
         marginPctOverride: p.marginPctOverride,
         minimumRetailPrice: p.minimumRetailPrice,
       });

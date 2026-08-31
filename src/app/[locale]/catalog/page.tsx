@@ -6,7 +6,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { tJson } from "@/lib/utils";
 import { CatalogControls } from "@/components/CatalogControls";
 import { Link } from "@/i18n/routing";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
 
 function pageHref(item: number, sp: Record<string, string | string[] | undefined>) {
   const next = new URLSearchParams();
@@ -17,6 +18,50 @@ function pageHref(item: number, sp: Record<string, string | string[] | undefined
   if (item > 1) next.set("page", String(item));
   const query = next.toString();
   return query ? `?${query}` : "?";
+}
+
+function pageItems(current: number, total: number) {
+  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
+  const items = new Set<number>();
+  for (let item = 1; item <= Math.min(5, total); item += 1) items.add(item);
+  for (let item = current - 1; item <= current + 1; item += 1) {
+    if (item > 1 && item < total) items.add(item);
+  }
+  for (let item = Math.max(1, total - 4); item <= total; item += 1) items.add(item);
+  items.add(total);
+  return Array.from(items).sort((a, b) => a - b);
+}
+
+function PageButton({
+  href,
+  label,
+  active,
+  disabled,
+  children,
+}: {
+  href: string;
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  const className = `grid h-11 w-11 place-items-center rounded-full border border-black/10 text-sm transition ${
+    active ? "bg-ink text-white" : "bg-white hover:border-ink"
+  } ${disabled ? "pointer-events-none opacity-35" : ""}`;
+
+  if (disabled) {
+    return (
+      <span className={className} aria-disabled="true" title={label}>
+        {children}
+      </span>
+    );
+  }
+
+  return (
+    <Link href={href} prefetch={false} className={className} aria-label={label} aria-current={active ? "page" : undefined} title={label}>
+      {children}
+    </Link>
+  );
 }
 
 export default async function CatalogPage({
@@ -61,9 +106,7 @@ export default async function CatalogPage({
   ]);
   const title = category ? tJson(category.name, locale) : t("title");
   const eyebrow = locale === "en" ? "Locko catalog" : "Каталог Locko";
-  const pageItems = Array.from(
-    new Set([1, Math.max(1, page - 1), page, Math.min(data.pages, page + 1), data.pages]),
-  ).filter((item) => item >= 1 && item <= data.pages);
+  const paginationItems = pageItems(page, data.pages);
 
   return (
     <div className="overflow-x-hidden pb-16">
@@ -104,26 +147,36 @@ export default async function CatalogPage({
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-5 xl:grid-cols-3">
-                {data.items.map((p) => (
-                  <ProductCard key={p.id} p={p} locale={locale} />
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {data.items.map((p, index) => (
+                  <div key={p.id} className="catalog-item" style={{ animationDelay: `${Math.min(index, 11) * 55}ms` }}>
+                    <ProductCard p={p} locale={locale} />
+                  </div>
                 ))}
               </div>
             )}
             {data.pages > 1 && (
               <div className="mt-8 flex max-w-full flex-wrap items-center gap-2">
-                {pageItems.map((item, index) => (
+                <PageButton href={pageHref(1, sp)} label={t("firstPage")} disabled={page === 1}>
+                  <ChevronFirst size={17} />
+                </PageButton>
+                <PageButton href={pageHref(Math.max(1, page - 1), sp)} label={t("prevPage")} disabled={page === 1}>
+                  <ChevronLeft size={17} />
+                </PageButton>
+                {paginationItems.map((item, index) => (
                   <div key={item} className="contents">
-                    {index > 0 && item - pageItems[index - 1] > 1 && <span className="px-1 text-sm text-graphite/40">...</span>}
-                    <Link
-                      href={pageHref(item, sp)}
-                      prefetch={false}
-                      className={`grid h-10 w-10 place-items-center rounded-full border border-black/10 ${page === item ? "bg-ink text-white" : "bg-white"}`}
-                    >
+                    {index > 0 && item - paginationItems[index - 1] > 1 && <span className="px-1 text-sm text-graphite/40">...</span>}
+                    <PageButton href={pageHref(item, sp)} label={`${t("pageLabel")} ${item}`} active={page === item}>
                       {item}
-                    </Link>
+                    </PageButton>
                   </div>
                 ))}
+                <PageButton href={pageHref(Math.min(data.pages, page + 1), sp)} label={t("nextPage")} disabled={page === data.pages}>
+                  <ChevronRight size={17} />
+                </PageButton>
+                <PageButton href={pageHref(data.pages, sp)} label={t("lastPage")} disabled={page === data.pages}>
+                  <ChevronLast size={17} />
+                </PageButton>
               </div>
             )}
           </div>

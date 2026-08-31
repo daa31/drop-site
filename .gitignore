@@ -1,5 +1,6 @@
 node_modules
 .next
+_archived_next_*/
 out
 dist
 .DS_Store
@@ -13,3 +14,4 @@ uploads
 .vercel
 coverage
 tsconfig.tsbuildinfo
+price.txt

@@ -24,6 +24,13 @@ export function middleware(request: NextRequest) {
   }
 
   const path = request.nextUrl.pathname;
+  const localeAdmin = path.match(/^\/(uk|ru|en)\/admin(?=\/|$)(.*)$/);
+  if (localeAdmin) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/admin${localeAdmin[2] || ""}`;
+    return NextResponse.redirect(url);
+  }
+
   if (path.startsWith("/api/") || path.startsWith("/admin")) {
     return NextResponse.next();
   }

@@ -10,6 +10,12 @@ import { ProductBuy } from "@/components/ProductBuy";
 import { BadgeCheck, PackageCheck, ShieldCheck, Truck } from "lucide-react";
 import type { Metadata } from "next";
 
+function hasEnglishText(field: unknown) {
+  if (typeof field !== "object" || !field) return false;
+  const en = ((field as Record<string, string>).en || "").trim();
+  return Boolean(en) && !/[\u0400-\u04FF]/.test(en);
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -18,11 +24,23 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   const product = await prisma.product.findUnique({
     where: { slug },
-    include: { images: { take: 1 }, seo: true },
+    include: { images: { take: 1 }, seo: true, brand: true, categories: { include: { category: true } } },
   });
   if (!product) return {};
   const title = tJson(product.seo?.title || product.name, locale);
-  const description = tJson(product.seo?.description || product.shortDescription || product.description, locale);
+  let description = tJson(product.seo?.description || product.shortDescription || product.description, locale);
+  if (locale === "en" && !hasEnglishText(product.seo?.description) && !hasEnglishText(product.shortDescription) && !hasEnglishText(product.description)) {
+    description = fallbackDescription({
+      locale: "en",
+      name: title,
+      brand: product.brand?.name,
+      category: product.categories[0]?.category ? tJson(product.categories[0].category.name, "en") : "",
+      sku: product.sku,
+      attrs: (product.attributes || {}) as Record<string, string>,
+      weightGrams: product.weightGrams,
+      dimensions: product.dimensions,
+    });
+  }
   return {
     title,
     description,
@@ -179,6 +197,66 @@ function prettyValue(value: string, locale: string) {
   return translated;
 }
 
+function hasDetailedDescription(value: string) {
+  const text = value.trim();
+  return text.length >= 360 || text.includes("\n- ") || text.includes("\n* ");
+}
+
+function firstParagraph(value: string) {
+  return value.split(/\n{1,}/).map((part) => part.trim()).find(Boolean) || value.trim();
+}
+
+function fallbackDescription(opts: {
+  locale: string;
+  name: string;
+  brand?: string | null;
+  category?: string;
+  sku: string;
+  attrs: Record<string, string>;
+  weightGrams?: number | null;
+  dimensions?: string | null;
+}) {
+  const { locale, name, brand, category, sku, attrs, weightGrams, dimensions } = opts;
+  const isEyewear = /окуляр|очк|glasses|goggle/i.test(name);
+  const details = [
+    sku ? `- ${locale === "ru" ? "артикул" : locale === "en" ? "SKU" : "артикул"}: ${sku};` : "",
+    brand ? `- ${locale === "ru" ? "бренд" : locale === "en" ? "brand" : "бренд"}: ${brand};` : "",
+    category ? `- ${locale === "ru" ? "категория" : locale === "en" ? "category" : "категорія"}: ${category};` : "",
+    attrs.lensColor ? `- ${locale === "ru" ? "цвет линзы" : locale === "en" ? "lens color" : "колір лінзи"}: ${prettyValue(attrs.lensColor, locale)};` : "",
+    attrs.frameColor ? `- ${locale === "ru" ? "тип/цвет оправы" : locale === "en" ? "frame" : "тип/колір оправи"}: ${prettyValue(attrs.frameColor, locale)};` : "",
+    attrs.uv ? `- UV: ${prettyValue(attrs.uv, locale)};` : "",
+    attrs.antiFog ? `- Anti-Fog: ${prettyValue(attrs.antiFog, locale)};` : "",
+    attrs.polarized ? `- ${locale === "ru" ? "поляризация" : locale === "en" ? "polarized" : "поляризація"}: ${prettyValue(attrs.polarized, locale)};` : "",
+    attrs.photochromic ? `- ${locale === "ru" ? "фотохром" : locale === "en" ? "photochromic" : "фотохром"}: ${prettyValue(attrs.photochromic, locale)};` : "",
+    attrs.interchangeable ? `- ${locale === "ru" ? "сменные линзы" : locale === "en" ? "interchangeable lenses" : "змінні лінзи"}: ${prettyValue(attrs.interchangeable, locale)};` : "",
+    attrs.rxInsert ? `- ${locale === "ru" ? "диоптрическая вставка" : locale === "en" ? "RX insert" : "діоптрична вставка"}: ${prettyValue(attrs.rxInsert, locale)};` : "",
+    dimensions ? `- ${locale === "ru" ? "размеры" : locale === "en" ? "dimensions" : "розміри"}: ${dimensions};` : "",
+    weightGrams ? `- ${locale === "ru" ? "вес" : locale === "en" ? "weight" : "вага"}: ${weightGrams} г;` : "",
+  ].filter(Boolean);
+
+  if (locale === "ru") {
+    return [
+      `${name} - ${brand ? `товар бренда ${brand}` : "позиция из каталога Locko"}${category ? ` в разделе "${category}"` : ""}. ${isEyewear ? "Модель подобрана для защиты зрения, комфортной посадки и ежедневного использования по назначению." : "Аксессуар помогает удобно хранить, переносить или обслуживать очки и дополняет базовый набор пользователя."}`,
+      details.length ? `Основные данные:\n${details.join("\n")}` : "",
+      "Перед отправкой менеджер Locko сверяет артикул, наличие и комплектацию, чтобы клиент получил именно выбранную позицию.",
+    ].filter(Boolean).join("\n\n");
+  }
+
+  if (locale === "en") {
+    return [
+      `${name} is ${brand ? `a ${brand} item` : "a Locko catalog item"}${category ? ` from "${category}"` : ""}. ${isEyewear ? "It is selected for eye protection, comfortable fit and everyday task-focused use." : "The accessory helps store, carry or maintain eyewear and completes a practical eyewear kit."}`,
+      details.length ? `Key details:\n${details.join("\n")}` : "",
+      "Before shipment, Locko checks the SKU, availability and package contents so the customer receives the selected item.",
+    ].filter(Boolean).join("\n\n");
+  }
+
+  return [
+    `${name} - ${brand ? `товар бренду ${brand}` : "позиція з каталогу Locko"}${category ? ` у розділі "${category}"` : ""}. ${isEyewear ? "Модель підібрана для захисту зору, комфортної посадки та щоденного використання за призначенням." : "Аксесуар допомагає зручно зберігати, переносити або обслуговувати окуляри й доповнює базовий набір користувача."}`,
+    details.length ? `Основні дані:\n${details.join("\n")}` : "",
+    "Перед відправленням менеджер Locko звіряє артикул, наявність і комплектацію, щоб клієнт отримав саме обрану позицію.",
+  ].filter(Boolean).join("\n\n");
+}
+
 export default async function ProductPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   const t = await getTranslations({ locale, namespace: "product" });
@@ -221,9 +299,35 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   const inStock = product.stockStatus === "in_stock" && product.stock > 0;
   const cat = product.categories[0]?.category;
   const categoryName = cat ? tJson(cat.name, locale) : "";
-  const overview = tJson(product.shortDescription, locale) || tJson(product.description, locale) || c.summary(name, product.brand?.name, categoryName, attrs);
-  const kit = tJson(product.kit, locale) || c.noKit;
-  const usage = tJson(product.usage, locale) || c.noUsage;
+  const generatedDescription = fallbackDescription({
+    locale,
+    name,
+    brand: product.brand?.name,
+    category: categoryName,
+    sku: product.sku,
+    attrs,
+    weightGrams: product.weightGrams,
+    dimensions: product.dimensions,
+  });
+  const isEn = locale === "en";
+  const hasEnDescription = hasEnglishText(product.description);
+  const hasEnShort = hasEnglishText(product.shortDescription);
+  const hasEnKit = hasEnglishText(product.kit);
+  const hasEnUsage = hasEnglishText(product.usage);
+
+  let description: string;
+  if (isEn && !hasEnDescription) {
+    description = generatedDescription;
+  } else {
+    const full = tJson(product.description, locale);
+    description = hasDetailedDescription(full) ? full : [full, generatedDescription].filter(Boolean).join("\n\n");
+  }
+  const overview = isEn && !hasEnShort
+    ? firstParagraph(description) || c.summary(name, product.brand?.name, categoryName, attrs)
+    : tJson(product.shortDescription, locale) || firstParagraph(description) || c.summary(name, product.brand?.name, categoryName, attrs);
+  const kit = isEn && !hasEnKit ? c.noKit : tJson(product.kit, locale) || c.noKit;
+  const usage = isEn && !hasEnUsage ? c.noUsage : tJson(product.usage, locale) || c.noUsage;
+  const descriptionTitle = locale === "ru" ? "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435" : locale === "en" ? "Description" : "\u041e\u043f\u0438\u0441";
 
   return (
     <div className="pb-24 lg:pb-16">
@@ -259,9 +363,9 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
         ]}
       />
 
-      <div className="grid w-full min-w-0 gap-6 pl-0 pr-4 sm:pr-6 lg:grid-cols-[minmax(0,62vw)_minmax(360px,1fr)] lg:items-start">
+      <div className="grid w-full min-w-0 gap-6 pl-0 pr-4 sm:pr-6 lg:grid-cols-[minmax(0,52vw)_minmax(360px,1fr)] lg:items-start">
         <ProductGallery images={product.images} alt={name} />
-        <div className="min-w-0 lg:pt-4">
+        <div className="min-w-0 px-4 sm:px-6 lg:px-0 lg:pt-4">
           <div className="flex flex-wrap items-center gap-2">
             {product.brand?.name && <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-graphite/60">{product.brand.name}</span>}
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${inStock ? "bg-emerald-50 text-emerald-700" : "bg-white text-graphite/50"}`}>
@@ -272,7 +376,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
           <div className="mt-3 text-sm text-graphite/60">
             {t("sku")}: {product.sku}
           </div>
-          <ProductBuy id={product.id} slug={product.slug} unitPrice={product.retailPrice} locale={locale} />
+          <ProductBuy id={product.id} slug={product.slug} unitPrice={product.retailPrice} locale={locale} canOrder={inStock} />
           <div className="mt-8 grid gap-px overflow-hidden rounded-lg border border-black/10 bg-black/10 sm:grid-cols-2">
             {[
               [ShieldCheck, c.verified],
@@ -291,25 +395,25 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
 
       <div className="container-f mt-14 grid items-start gap-10 lg:grid-cols-2">
         <section className="rounded-lg border border-black/10 bg-white p-5 shadow-card">
-          <h2 className="font-display text-xl">{t("short")}</h2>
-          <p className="mt-3 leading-7 text-graphite/80">{overview}</p>
+          <h2 className="font-display text-xl">{descriptionTitle}</h2>
+          <div className="mt-3 whitespace-pre-line leading-7 text-graphite/80">{description}</div>
         </section>
         <section className="rounded-lg border border-black/10 bg-white p-6 shadow-card">
           <h2 className="font-display text-xl">{t("specs")}</h2>
-          <table className="mt-3 w-full text-sm">
+          <table className="mt-3 w-full table-fixed text-sm">
             <tbody>
               <tr className="border-b border-black/5">
-                <td className="py-2 text-graphite/50">{t("brand")}</td>
-                <td>{product.brand?.name}</td>
+                <td className="w-[42%] py-2 align-top break-words text-graphite/50">{t("brand")}</td>
+                <td className="py-2 break-words">{product.brand?.name}</td>
               </tr>
               <tr className="border-b border-black/5">
-                <td className="py-2 text-graphite/50">{t("sku")}</td>
-                <td>{product.sku}</td>
+                <td className="w-[42%] py-2 align-top break-words text-graphite/50">{t("sku")}</td>
+                <td className="py-2 break-words">{product.sku}</td>
               </tr>
               {Object.entries(attrs).map(([k, v]) => (
                 <tr key={k} className="border-b border-black/5">
-                  <td className="py-2 text-graphite/50">{c.attr[k as keyof typeof c.attr] || k}</td>
-                  <td>{prettyValue(v, locale)}</td>
+                  <td className="w-[42%] py-2 align-top break-words text-graphite/50">{c.attr[k as keyof typeof c.attr] || k}</td>
+                  <td className="py-2 break-words">{prettyValue(v, locale)}</td>
                 </tr>
               ))}
             </tbody>

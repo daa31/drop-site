@@ -5,6 +5,7 @@ import { ProductCard, CardProduct } from "@/components/ProductCard";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
+import { readWishlistSlugs, WISHLIST_EVENT } from "@/lib/wishlist";
 
 export default function WishlistPage() {
   const t = useTranslations("wishlist");
@@ -12,24 +13,36 @@ export default function WishlistPage() {
   const locale = useLocale();
   const [items, setItems] = useState<CardProduct[]>([]);
   useEffect(() => {
-    const slugs: string[] = JSON.parse(localStorage.getItem("fortis_wish") || "[]");
-    Promise.all(slugs.map((s) => fetch(`/api/products/${s}`).then((r) => (r.ok ? r.json() : null)))).then((rows) => {
-      setItems(
-        rows.filter(Boolean).map((p) => ({
-          id: p.id,
-          slug: p.slug,
-          sku: p.sku,
-          name: p.name,
-          brand: p.brand?.name,
-          retailPrice: p.retailPrice,
-          oldPrice: p.oldPrice,
-          discountPercent: p.discountPercent,
-          stockStatus: p.stockStatus,
-          stock: p.stock,
-          image: p.images?.[0]?.url,
-        })),
-      );
-    });
+    let active = true;
+
+    function load() {
+      const slugs = readWishlistSlugs();
+      Promise.all(slugs.map((s) => fetch(`/api/products/${s}`).then((r) => (r.ok ? r.json() : null)))).then((rows) => {
+        if (!active) return;
+        setItems(
+          rows.filter(Boolean).map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            sku: p.sku,
+            name: p.name,
+            brand: p.brand?.name,
+            retailPrice: p.retailPrice,
+            oldPrice: p.oldPrice,
+            discountPercent: p.discountPercent,
+            stockStatus: p.stockStatus,
+            stock: p.stock,
+            image: p.images?.[0]?.url,
+          })),
+        );
+      });
+    }
+
+    load();
+    window.addEventListener(WISHLIST_EVENT, load);
+    return () => {
+      active = false;
+      window.removeEventListener(WISHLIST_EVENT, load);
+    };
   }, []);
   if (!items.length) {
     return (

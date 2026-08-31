@@ -1,5 +1,7 @@
 import { defineRouting } from "next-intl/routing";
 import { createNavigation } from "next-intl/navigation";
+import { createElement } from "react";
+import type { ComponentProps } from "react";
 
 export const routing = defineRouting({
   locales: ["uk", "ru", "en"],
@@ -7,5 +9,11 @@ export const routing = defineRouting({
   localePrefix: "as-needed",
 });
 
-export const { Link, redirect, usePathname, useRouter, getPathname } =
-  createNavigation(routing);
+const navigation = createNavigation(routing);
+const LocalizedLink = navigation.Link;
+
+export function Link({ prefetch = false, ...props }: ComponentProps<typeof LocalizedLink>) {
+  return createElement(LocalizedLink, { ...props, prefetch });
+}
+
+export const { redirect, usePathname, useRouter, getPathname } = navigation;

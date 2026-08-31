@@ -24,7 +24,7 @@ export default function GuidePage() {
     const params = new URLSearchParams();
     if (next.lens === "clear") params.set("lens", "clear");
     if (next.lens === "dark") params.set("lens", "gray");
-    if (next.lens === "yellow") params.set("lens", "amber");
+    if (next.lens === "yellow") params.set("lens", "yellow");
     if (next.lens === "photo") params.set("photo", "yes");
     if (next.lens === "polar") params.set("polar", "yes");
     if (next.af === "yes") params.set("af", "yes");

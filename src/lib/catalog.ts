@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { findSearchProductIds } from "./search";
 import { tJson } from "./utils";
 
 export function toCard(p: {
@@ -50,6 +51,55 @@ function lensMatches(value: string, selected?: string) {
   return needles.some((needle) => normalized.includes(needle));
 }
 
+function textValue(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.map(textValue).join(" ");
+  if (typeof value === "object") return Object.values(value as Record<string, unknown>).map(textValue).join(" ");
+  return "";
+}
+
+function productText(product: {
+  sku?: string | null;
+  supplierArticle?: string | null;
+  name?: unknown;
+  shortDescription?: unknown;
+  benefits?: unknown;
+  description?: unknown;
+  kit?: unknown;
+  usage?: unknown;
+  attributes?: unknown;
+}) {
+  return [
+    product.sku,
+    product.supplierArticle,
+    textValue(product.name),
+    textValue(product.shortDescription),
+    textValue(product.benefits),
+    textValue(product.description),
+    textValue(product.kit),
+    textValue(product.usage),
+    textValue(product.attributes),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function truthyFeature(value: unknown) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return false;
+  return !["0", "false", "no", "ні", "нет", "немає", "нету", "none", "n/a", "-"].includes(normalized);
+}
+
+function includesAny(text: string, needles: string[]) {
+  return needles.some((needle) => text.includes(needle));
+}
+
+function rxTextMatches(text: string) {
+  return /\brx(?:-able|-ready|\b)|\+rx|1rx/i.test(text) || includesAny(text, ["діоптр", "диоптр"]);
+}
+
 export async function listProducts(opts: {
   category?: string;
   brand?: string;
@@ -81,6 +131,17 @@ export async function listProducts(opts: {
       lte: opts.max ?? 1_000_000,
     };
   }
+  if (opts.q?.trim()) {
+    const q = opts.q.trim();
+    const searchIds = await findSearchProductIds(q, 5000);
+    const searchConditions: Record<string, unknown>[] = [
+      { sku: { contains: q } },
+      { supplierArticle: { contains: q } },
+      { brand: { name: { contains: q } } },
+    ];
+    if (searchIds.length) searchConditions.push({ id: { in: searchIds } });
+    where.OR = searchConditions;
+  }
 
   let orderBy: object = { popularity: "desc" };
   if (opts.sort === "cheap") orderBy = { retailPrice: "asc" };
@@ -90,8 +151,7 @@ export async function listProducts(opts: {
   if (opts.sort === "name") orderBy = { sku: "asc" };
 
   const needsClientFiltering = Boolean(
-    opts.q ||
-      opts.lens ||
+    opts.lens ||
       opts.antiFog ||
       opts.photo ||
       opts.polar ||
@@ -129,26 +189,15 @@ export async function listProducts(opts: {
     orderBy,
   });
 
-  const locale = opts.locale || "uk";
   const filtered = all.filter((p) => {
     const a = (p.attributes || {}) as Record<string, string>;
+    const text = productText(p);
     if (!lensMatches(String(a.lensColor || ""), opts.lens)) return false;
-    if (opts.antiFog === "yes" && !a.antiFog) return false;
-    if (opts.photo === "yes" && a.photochromic !== "yes") return false;
-    if (opts.polar === "yes" && a.polarized !== "yes") return false;
-    if (opts.rx === "yes" && a.rxInsert !== "yes") return false;
-    if (opts.interchangeable === "yes" && a.interchangeable !== "yes") return false;
-    if (opts.q) {
-      const n = tJson(p.name, locale).toLowerCase();
-      const q = opts.q.toLowerCase();
-      if (
-        !n.includes(q) &&
-        !p.sku.toLowerCase().includes(q) &&
-        !p.supplierArticle.toLowerCase().includes(q) &&
-        !(p.brand?.name.toLowerCase().includes(q))
-      )
-        return false;
-    }
+    if (opts.antiFog === "yes" && !truthyFeature(a.antiFog) && !includesAny(text, ["anti-fog", "anti fog", "antifog", "h2max"])) return false;
+    if (opts.photo === "yes" && !truthyFeature(a.photochromic) && !includesAny(text, ["фотохром", "photochrom"])) return false;
+    if (opts.polar === "yes" && !truthyFeature(a.polarized) && !includesAny(text, ["поляризац", "поляризаці", "polarized", "polarization"])) return false;
+    if (opts.rx === "yes" && !truthyFeature(a.rxInsert) && !rxTextMatches(text)) return false;
+    if (opts.interchangeable === "yes" && !truthyFeature(a.interchangeable) && !includesAny(text, ["змінними лінзами", "сменными линзами", "interchangeable"])) return false;
     return true;
   });
 

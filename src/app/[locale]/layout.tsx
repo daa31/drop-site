@@ -41,6 +41,7 @@ export default async function LocaleLayout({
         cartCount={cart.reduce((s, i) => s + i.qty, 0)}
         user={session}
       />
+      <div className="h-[128px] md:h-[72px]" aria-hidden="true" />
       <main className="min-h-[70vh]">{children}</main>
       <Footer locale={locale} settings={settings} />
       <CookieBanner />

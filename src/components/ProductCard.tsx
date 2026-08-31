@@ -3,8 +3,10 @@
 import { Heart, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { formatPrice, tJson } from "@/lib/utils";
+import { readWishlistSlugs, toggleWishlistSlug, WISHLIST_EVENT } from "@/lib/wishlist";
 
 export type CardProduct = {
   id: string;
@@ -26,8 +28,19 @@ export type CardProduct = {
 export function ProductCard({ p, locale }: { p: CardProduct; locale: string }) {
   const t = useTranslations("product");
   const inStock = p.stockStatus === "in_stock" && p.stock > 0;
-  const canOrder = true;
+  const canOrder = inStock;
   const name = tJson(p.name, locale);
+  const [isWished, setIsWished] = useState(false);
+
+  useEffect(() => {
+    function syncWishlistState() {
+      setIsWished(readWishlistSlugs().includes(p.slug));
+    }
+
+    syncWishlistState();
+    window.addEventListener(WISHLIST_EVENT, syncWishlistState);
+    return () => window.removeEventListener(WISHLIST_EVENT, syncWishlistState);
+  }, [p.slug]);
 
   function animateToCart(button: HTMLButtonElement) {
     const cart = document.querySelector<HTMLElement>("[data-cart-target]");
@@ -72,7 +85,7 @@ export function ProductCard({ p, locale }: { p: CardProduct; locale: string }) {
   }
 
   return (
-    <article className="group relative flex min-h-[320px] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(17,18,20,0.12)]">
+    <article className={`group relative flex min-h-[320px] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-card transition duration-300 ${canOrder ? "hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(17,18,20,0.12)]" : "grayscale opacity-60"}`}>
       <Link href={`/product/${p.slug}`} prefetch={false} className="relative aspect-square overflow-hidden bg-[#eef0ed]">
         {p.image ? (
           <Image
@@ -123,25 +136,25 @@ export function ProductCard({ p, locale }: { p: CardProduct; locale: string }) {
               });
               window.dispatchEvent(new CustomEvent("locko:cart-added", { detail: { qty: 1 } }));
             }}
-            className="focus-ring flex h-10 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-3 text-sm font-medium text-white transition hover:bg-black disabled:opacity-40"
+            className="focus-ring flex h-10 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-graphite/35 disabled:opacity-80"
           >
             <ShoppingBag size={16} />
-            {t("buy")}
+            {canOrder ? t("add") : t("out")}
           </button>
           <button
             type="button"
             onClick={(event) => {
-              animateToWishlist(event.currentTarget);
-              const raw = localStorage.getItem("fortis_wish") || "[]";
-              const ids: string[] = JSON.parse(raw);
-              const next = ids.includes(p.slug) ? ids.filter((x) => x !== p.slug) : [...ids, p.slug];
-              localStorage.setItem("fortis_wish", JSON.stringify(next));
-              window.dispatchEvent(new CustomEvent("locko:wishlist-updated", { detail: { slug: p.slug } }));
+              const change = toggleWishlistSlug(p.slug);
+              setIsWished(change.added);
+              if (change.added) animateToWishlist(event.currentTarget);
             }}
-            className="focus-ring grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/10 transition hover:border-ink hover:bg-mist"
+            className={`focus-ring grid h-10 w-10 shrink-0 place-items-center rounded-full border transition hover:border-ink hover:bg-mist ${
+              isWished ? "border-red-500 bg-red-50 text-red-600" : "border-black/10"
+            }`}
             aria-label={t("fav")}
+            aria-pressed={isWished}
           >
-            <Heart size={16} />
+            <Heart size={16} fill={isWished ? "currentColor" : "none"} />
           </button>
         </div>
       </div>

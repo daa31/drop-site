@@ -30,6 +30,7 @@ export function computeRetail(opts: {
   brandMargin?: number | null;
   productMargin?: number | null;
   customRetail?: number | null;
+  rrc?: number | null;
   mrp?: number | null;
   rounding?: string;
   oldPrice?: number | null;
@@ -41,6 +42,7 @@ export function computeRetail(opts: {
     brandMargin,
     productMargin,
     customRetail,
+    rrc,
     mrp,
     rounding = "99",
     oldPrice,
@@ -50,17 +52,16 @@ export function computeRetail(opts: {
     productMargin ?? brandMargin ?? categoryMargin ?? defaultMargin;
 
   let retail =
-    customRetail != null
-      ? customRetail
-      : supplierPrice * (1 + margin / 100);
-
-  retail = roundPrice(retail, rounding);
+    rrc != null && rrc > 0
+      ? rrc
+      : customRetail != null
+        ? roundPrice(customRetail, rounding)
+        : roundPrice(supplierPrice * (1 + margin / 100), rounding);
 
   let belowMrp = false;
-  if (mrp != null && retail < mrp) {
+  if (mrp != null && rrc == null && retail < mrp) {
     retail = mrp;
-    belowMrp = customRetail != null ? customRetail < mrp : false;
-    if (customRetail == null) belowMrp = true;
+    belowMrp = true;
   }
 
   const disc =

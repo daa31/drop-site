@@ -2,7 +2,7 @@ import { prisma } from "./db";
 
 export async function siteSettings() {
   const rows = await prisma.setting.findMany();
-  return Object.fromEntries(rows.map((r) => [r.key, r.value])) as Record<string, string>;
+  return { ...DEFAULT_SETTINGS, ...Object.fromEntries(rows.map((r) => [r.key, r.value])) } as Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: Record<string, string> = {
@@ -17,9 +17,19 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   meta_pixel: "",
   tiktok_pixel: "",
   google_ads: "",
+  site_url: process.env.NEXT_PUBLIC_SITE_URL || "",
   np_api_key: "",
   telegram_bot_token: "",
   telegram_chat_id: "",
+  order_notification_email: process.env.ORDER_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || "",
+  smtp_host: process.env.SMTP_HOST || "",
+  smtp_port: process.env.SMTP_PORT || "587",
+  smtp_secure: process.env.SMTP_SECURE || "false",
+  smtp_user: process.env.SMTP_USER || "",
+  smtp_pass: process.env.SMTP_PASSWORD || "",
+  smtp_from: process.env.SMTP_FROM || "",
+  resend_api_key: process.env.RESEND_API_KEY || "",
+  resend_from: process.env.RESEND_FROM || "",
   payment_fee_pct: "2.2",
   feed_uabest_url:
     "https://uabest.com.ua/content/export/f3c3a6750fc5783821bd896ea6f5dba3.xml",
@@ -33,11 +43,11 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   delivery_info_en:
     "Nova Poshta delivery across Ukraine. Typically 1-3 business days after order confirmation.",
   payment_info_uk:
-    "Оплата при отриманні або онлайн після підключення LiqPay / WayForPay.",
+    "Оплата при отриманні. Онлайн-оплату через LiqPay / WayForPay можна підключити окремо.",
   payment_info_ru:
-    "Оплата при получении или онлайн после подключения LiqPay / WayForPay.",
+    "Оплата при получении. Онлайн-оплату через LiqPay / WayForPay можно подключить отдельно.",
   payment_info_en:
-    "Cash on delivery or online payment after LiqPay / WayForPay keys are connected.",
+    "Pay on delivery. Online payments via LiqPay / WayForPay can be enabled separately.",
   return_info_uk:
     "Повернення протягом 14 днів за умови збереження товарного вигляду. Індивідуальні замовлення - за окремими умовами.",
   return_info_ru:

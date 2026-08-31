@@ -9,7 +9,13 @@ export async function getCart(): Promise<CartItem[]> {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as CartItem[];
-    return Array.isArray(parsed) ? parsed.filter((i) => i.qty > 0) : [];
+    if (!Array.isArray(parsed)) return [];
+    const merged = new Map<string, number>();
+    for (const item of parsed) {
+      if (!item || typeof item.productId !== "string" || !(item.qty > 0)) continue;
+      merged.set(item.productId, (merged.get(item.productId) || 0) + item.qty);
+    }
+    return Array.from(merged, ([productId, qty]) => ({ productId, qty }));
   } catch {
     return [];
   }

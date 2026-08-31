@@ -64,12 +64,14 @@ async function main() {
     await prisma.setting.create({ data: { key, value } });
   }
 
-  const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "ChangeMe_Admin_123", 12);
+  const adminUsername = process.env.ADMIN_USERNAME || "ruberto";
+  const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "3158", 12);
   await prisma.user.create({
     data: {
-      email: process.env.ADMIN_EMAIL || "admin@fortis.ua",
+      email: process.env.ADMIN_EMAIL || null,
+      username: adminUsername,
       passwordHash: hash,
-      name: "Admin",
+      name: adminUsername,
       role: "admin",
     },
   });
@@ -92,18 +94,21 @@ async function main() {
   }
 
   const cats = [
-    { slug: "zakhysni-okuliary", uk: "Захисні окуляри", ru: "Защитные очки", en: "Safety glasses" },
-    { slug: "okuliary-z-ushchilniuachem", uk: "Окуляри з ущільнювачем", ru: "Очки с уплотнителем", en: "Sealed eyewear" },
-    { slug: "zi-zminnymy-linzamy", uk: "Окуляри зі змінними лінзами", ru: "Очки со сменными линзами", en: "Interchangeable lenses" },
-    { slug: "fotokhromni-okuliary", uk: "Фотохромні окуляри", ru: "Фотохромные очки", en: "Photochromic glasses" },
-    { slug: "poliaryzatsiini-okuliary", uk: "Поляризаційні окуляри", ru: "Поляризационные очки", en: "Polarized glasses" },
-    { slug: "okuliary-dlia-vodiiv", uk: "Окуляри для водіїв", ru: "Очки для водителей", en: "Driver glasses" },
-    { slug: "dioptrychni-rishennia", uk: "Діоптричні рішення", ru: "Диоптрические решения", en: "Rx-ready solutions" },
-    { slug: "taktychni-okuliary", uk: "Тактичні окуляри", ru: "Тактические очки", en: "Tactical glasses" },
-    { slug: "zakhyst-slukhu", uk: "Захист слуху", ru: "Защита слуха", en: "Hearing protection" },
-    { slug: "rukavytsi", uk: "Рукавиці", ru: "Перчатки", en: "Gloves" },
-    { slug: "aksesuary", uk: "Аксесуари", ru: "Аксессуары", en: "Accessories" },
-    { slug: "inshi-tovary", uk: "Інші товари", ru: "Другие товары", en: "Other products" },
+    { slug: "zakhysni-okuliary", uk: "Захисні окуляри", ru: "Защитные очки", en: "Safety glasses", sortOrder: 0 },
+    { slug: "okuliary-z-ushchilniuachem", uk: "Окуляри з ущільнювачем", ru: "Очки с уплотнителем", en: "Sealed eyewear", sortOrder: 1 },
+    { slug: "zi-zminnymy-linzamy", uk: "Окуляри зі змінними лінзами", ru: "Очки со сменными линзами", en: "Interchangeable lenses", sortOrder: 2 },
+    { slug: "fotokhromni-okuliary", uk: "Фотохромні окуляри", ru: "Фотохромные очки", en: "Photochromic glasses", sortOrder: 3 },
+    { slug: "poliaryzatsiini-okuliary", uk: "Поляризаційні окуляри", ru: "Поляризационные очки", en: "Polarized glasses", sortOrder: 4 },
+    { slug: "okuliary-dlia-vodiiv", uk: "Окуляри для водіїв", ru: "Очки для водителей", en: "Driver glasses", sortOrder: 5 },
+    { slug: "dioptrychni-rishennia", uk: "Діоптричні рішення", ru: "Диоптрические решения", en: "Rx-ready solutions", sortOrder: 6 },
+    { slug: "taktychni-okuliary", uk: "Тактичні окуляри", ru: "Тактические очки", en: "Tactical glasses", sortOrder: 7 },
+    { slug: "zakhyst-slukhu", uk: "Захист слуху", ru: "Защита слуха", en: "Hearing protection", sortOrder: 8 },
+    { slug: "rukavytsi", uk: "Рукавиці", ru: "Перчатки", en: "Gloves", sortOrder: 9 },
+    { slug: "aksesuary", uk: "Аксесуари для окулярів", ru: "Аксессуары для очков", en: "Eyewear accessories", sortOrder: 10 },
+    { slug: "zasoby-dlia-dohliadu-za-okuliaramy", uk: "Засоби для догляду за окулярами", ru: "Средства для ухода за очками", en: "Eyewear care", sortOrder: 11 },
+    { slug: "rementsi-ta-kriplennia-dlia-okuliariv", uk: "Ремінці та кріплення для окулярів", ru: "Ремешки и крепления для очков", en: "Straps and holders", sortOrder: 12 },
+    { slug: "futliary-chokhly-ta-mishechky-dlia-okuliariv", uk: "Футляри, чохли та мішечки для окулярів", ru: "Футляры, чехлы и мешочки для очков", en: "Cases and pouches", sortOrder: 13 },
+    { slug: "inshi-tovary", uk: "Інше", ru: "Другое", en: "Other", sortOrder: 900 },
   ];
 
   const catMap: Record<string, string> = {};
@@ -112,7 +117,7 @@ async function main() {
       data: {
         slug: c.slug,
         name: L(c.uk, c.ru, c.en),
-        sortOrder: i,
+        sortOrder: c.sortOrder ?? i,
         seoText: L(
           `${c.uk} у FORTIS — підбір за призначенням, лінзою та посадкою. Доставка Новою Поштою по Україні.`,
           `${c.ru} в FORTIS — подбор по задаче, линзе и посадке. Доставка Новой Почтой по Украине.`,
@@ -559,7 +564,7 @@ async function main() {
       sku: "FORTIS-CASE-01",
       slug: "futliar-dlia-zakhysnykh-okuliariv",
       brand: "Pyramex",
-      cats: ["aksesuary"],
+      cats: ["aksesuary", "futliary-chokhly-ta-mishechky-dlia-okuliariv"],
       name: L("Футляр для захисних окулярів", "Футляр для защитных очков", "Protective glasses case"),
       short: L("Жорсткий футляр для зберігання та перевезення окулярів.", "Жёсткий футляр для хранения очков.", "Hard case for storing safety glasses."),
       benefits: [],
@@ -570,7 +575,7 @@ async function main() {
       sku: "FORTIS-STRAP-01",
       slug: "remeshok-dlia-okuliariv",
       brand: "Venture Gear",
-      cats: ["aksesuary"],
+      cats: ["aksesuary", "rementsi-ta-kriplennia-dlia-okuliariv"],
       name: L("Ремінець для окулярів", "Ремешок для очков", "Eyewear strap"),
       short: L("Ремінець для фіксації окулярів під час роботи чи спорту.", "Ремешок для фиксации очков.", "Strap to keep glasses in place at work or sport."),
       benefits: [],

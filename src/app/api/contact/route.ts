@@ -10,5 +10,7 @@ export async function POST(req: NextRequest) {
       body: `${form.get("name")} ${form.get("email")}: ${form.get("message")}`,
     },
   });
-  return NextResponse.redirect(new URL("/contacts", req.url));
+  const referer = req.headers.get("referer") || "";
+  const locale = referer.match(/^\/(uk|ru|en)(?:\/|$)/)?.[1] || "uk";
+  return NextResponse.redirect(new URL(`/${locale}/contacts?sent=1`, req.nextUrl.origin), 303);
 }

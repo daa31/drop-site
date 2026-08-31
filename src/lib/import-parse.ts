@@ -76,17 +76,20 @@ export function parseYmlOffers(xml: string, source = "yml"): ImportRow[] {
       const categoryId = text(it.categoryId ?? it.category);
       const descriptionUk = cleanDescription(text(it.description_ua ?? it.description_uk));
       const descriptionRu = cleanDescription(text(it.description));
+      const nameUk = text(it.name_ua ?? it.name_uk) || text(it.name);
+      const nameRu = text(it.name) || text(it.name_ua);
+      const searchableText = [nameUk, nameRu, descriptionUk, descriptionRu].join(" ").toLowerCase();
 
       return {
         sku,
-        name_uk: text(it.name_ua ?? it.name_uk) || text(it.name),
-        name_ru: text(it.name) || text(it.name_ua),
+        name_uk: nameUk,
+        name_ru: nameRu,
         name_en: "",
         brand: text(it.vendor ?? it.brand),
         category: categories.get(categoryId) || categoryId,
         supplier_price: num(it.price),
         old_price: num(it.oldprice ?? it.old_price),
-        mrp: num(it.price),
+        mrp: num(it.mrp ?? it.price_mrp ?? it.recommended_price ?? it.min_retail_price ?? it.prmrp),
         stock,
         available,
         stock_status: available && (stock == null || stock > 0) ? "in_stock" : "out_of_stock",
@@ -96,11 +99,11 @@ export function parseYmlOffers(xml: string, source = "yml"): ImportRow[] {
         description_ru: descriptionRu || descriptionUk,
         lens_color: getParam(params, ["\u0446\u0432\u0435\u0442 \u043b\u0438\u043d\u0437", "\u043a\u043e\u043b\u0456\u0440 \u043b\u0456\u043d\u0437"]),
         frame_color: getParam(params, ["\u0446\u0432\u0435\u0442 \u043e\u043f\u0440\u0430\u0432\u044b", "\u043a\u043e\u043b\u0456\u0440 \u043e\u043f\u0440\u0430\u0432\u0438", "\u0442\u0438\u043f \u043e\u043f\u0440\u0430\u0432\u044b"]),
-        anti_fog: hasParam(params, ["\u0437\u0430\u0449\u0438\u0442\u0430 \u043e\u0442 \u0437\u0430\u043f\u043e\u0442\u0435\u0432\u0430\u043d\u0438\u044f", "\u0437\u0430\u0445\u0438\u0441\u0442 \u0432\u0456\u0434 \u0437\u0430\u043f\u043e\u0442\u0456\u0432\u0430\u043d\u043d\u044f"], ["anti-fog", "antifog", "h2max"]) ? "yes" : "",
-        polarized: hasParam(params, ["\u043f\u043e\u043b\u044f\u0440\u0438\u0437\u0430\u0446\u0438\u044f", "\u043f\u043e\u043b\u044f\u0440\u0438\u0437\u0430\u0446\u0456\u044f", "\u0442\u0438\u043f \u043b\u0438\u043d\u0437\u044b", "\u0442\u0438\u043f \u043b\u0456\u043d\u0437\u0438"], ["\u043f\u043e\u043b\u044f\u0440", "polar"]) ? "yes" : "",
-        photochromic: hasParam(params, ["\u0444\u043e\u0442\u043e\u0445\u0440\u043e\u043c", "\u0442\u0438\u043f \u043b\u0438\u043d\u0437\u044b", "\u0442\u0438\u043f \u043b\u0456\u043d\u0437\u0438"], ["\u0444\u043e\u0442\u043e\u0445\u0440\u043e\u043c", "photochrom"]) ? "yes" : "",
-        interchangeable: hasParam(params, ["\u0441\u043c\u0435\u043d\u043d\u044b\u0435 \u043b\u0438\u043d\u0437\u044b", "\u0437\u043c\u0456\u043d\u043d\u0456 \u043b\u0456\u043d\u0437\u0438"], ["\u0434\u0430", "\u0442\u0430\u043a", "yes"]) ? "yes" : "",
-        rx_insert: hasParam(params, ["\u0434\u0438\u043e\u043f\u0442\u0440", "\u0434\u0456\u043e\u043f\u0442\u0440"], ["\u0434\u0430", "\u0442\u0430\u043a", "yes"]) ? "yes" : "",
+        anti_fog: hasParam(params, ["\u0437\u0430\u0449\u0438\u0442\u0430 \u043e\u0442 \u0437\u0430\u043f\u043e\u0442\u0435\u0432\u0430\u043d\u0438\u044f", "\u0437\u0430\u0445\u0438\u0441\u0442 \u0432\u0456\u0434 \u0437\u0430\u043f\u043e\u0442\u0456\u0432\u0430\u043d\u043d\u044f"], ["anti-fog", "antifog", "h2max"]) || hasText(searchableText, ["anti-fog", "anti fog", "antifog", "h2max"]) ? "yes" : "",
+        polarized: hasParam(params, ["\u043f\u043e\u043b\u044f\u0440\u0438\u0437\u0430\u0446\u0438\u044f", "\u043f\u043e\u043b\u044f\u0440\u0438\u0437\u0430\u0446\u0456\u044f", "\u0442\u0438\u043f \u043b\u0438\u043d\u0437\u044b", "\u0442\u0438\u043f \u043b\u0456\u043d\u0437\u0438"], ["\u043f\u043e\u043b\u044f\u0440", "polar"]) || hasText(searchableText, ["поляризац", "поляризаці", "polarized", "polarization"]) ? "yes" : "",
+        photochromic: hasParam(params, ["\u0444\u043e\u0442\u043e\u0445\u0440\u043e\u043c", "\u0442\u0438\u043f \u043b\u0438\u043d\u0437\u044b", "\u0442\u0438\u043f \u043b\u0456\u043d\u0437\u0438"], ["\u0444\u043e\u0442\u043e\u0445\u0440\u043e\u043c", "photochrom"]) || hasText(searchableText, ["фотохром", "photochrom"]) ? "yes" : "",
+        interchangeable: hasParam(params, ["\u0441\u043c\u0435\u043d\u043d\u044b\u0435 \u043b\u0438\u043d\u0437\u044b", "\u0437\u043c\u0456\u043d\u043d\u0456 \u043b\u0456\u043d\u0437\u0438"], ["\u0434\u0430", "\u0442\u0430\u043a", "yes"]) || hasText(searchableText, ["змінними лінзами", "сменными линзами", "interchangeable"]) ? "yes" : "",
+        rx_insert: hasParam(params, ["\u0434\u0438\u043e\u043f\u0442\u0440", "\u0434\u0456\u043e\u043f\u0442\u0440"], ["\u0434\u0430", "\u0442\u0430\u043a", "yes"]) || hasText(searchableText, ["діоптр", "диоптр", "rx-able", "rx ready", "+rx", "1rx"]) ? "yes" : "",
         uv: getParam(params, ["\u0437\u0430\u0449\u0438\u0442\u0430 \u043e\u0442 \u0443\u043b\u044c\u0442\u0440\u0430\u0444\u0438\u043e\u043b\u0435\u0442\u0430", "\u0437\u0430\u0445\u0438\u0441\u0442 \u0432\u0456\u0434 \u0443\u043b\u044c\u0442\u0440\u0430\u0444\u0456\u043e\u043b\u0435\u0442\u0443"]),
         source,
       } satisfies ImportRow;
@@ -140,6 +143,10 @@ function hasParam(params: Record<string, string>, keyNeedles: string[], valueNee
   });
 }
 
+function hasText(value: string, needles: string[]) {
+  return needles.some((needle) => value.includes(needle));
+}
+
 function getParam(params: Record<string, string>, keys: string[]) {
   for (const key of keys) {
     const value = params[key];
@@ -160,7 +167,9 @@ function text(v: unknown): string {
 }
 
 function num(v: unknown): number | undefined {
-  const n = Number(String(v ?? "").replace(",", ".").replace(/[^\d.]/g, ""));
+  const s = String(v ?? "").replace(",", ".").trim();
+  if (!s) return undefined;
+  const n = Number(s.replace(/[^\d.]/g, ""));
   return Number.isFinite(n) ? n : undefined;
 }
 
@@ -199,11 +208,19 @@ function cleanDescription(value: string) {
   return value
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<li[^>]*>/gi, "\n- ")
+    .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<t[dh][^>]*>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n")
     .trim();
 }

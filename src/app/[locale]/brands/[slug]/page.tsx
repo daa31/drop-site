@@ -20,8 +20,10 @@ export default async function BrandPage({ params }: { params: Promise<{ locale: 
       <h1 className="font-display text-3xl">{brand.name}</h1>
       <p className="mt-3 max-w-2xl text-graphite/70">{tJson(brand.description, locale)}</p>
       <div className="mt-8 grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {brand.products.map((p) => (
-          <ProductCard key={p.id} p={toCard(p)} locale={locale} />
+        {brand.products.map((p, index) => (
+          <div key={p.id} className="catalog-item" style={{ animationDelay: `${Math.min(index, 11) * 55}ms` }}>
+            <ProductCard p={toCard(p)} locale={locale} />
+          </div>
         ))}
       </div>
     </div>

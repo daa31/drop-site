@@ -1,23 +1,23 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { normalizeCatalogText } from "./localization";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export function formatPrice(amount: number, locale: string = "uk") {
-  void locale;
   const value = Math.round(amount)
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  return `${value} UAH`;
+  return `${value} ${locale === "en" ? "UAH" : "грн"}`;
 }
 
 export function tJson(value: unknown, locale: string): string {
   if (!value) return "";
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return normalizeCatalogText(value, locale);
   const obj = value as Record<string, string>;
-  return obj[locale] || obj.uk || obj.ru || obj.en || "";
+  return normalizeCatalogText(obj[locale] || obj.uk || obj.ru || obj.en || "", locale);
 }
 
 export function slugify(input: string) {

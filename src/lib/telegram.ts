@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 
-export async function notifyTelegram(text: string, extra?: { orderId?: string; phone?: string }) {
+export async function notifyTelegram(text: string, extra?: { orderId?: string; phone?: string; orderUrl?: string }) {
   const token =
     process.env.TELEGRAM_BOT_TOKEN ||
     (await prisma.setting.findUnique({ where: { key: "telegram_bot_token" } }))?.value;
@@ -13,7 +13,7 @@ export async function notifyTelegram(text: string, extra?: { orderId?: string; p
   const reply_markup = extra?.orderId
     ? {
         inline_keyboard: [
-          [{ text: "Відкрити замовлення", url: `${site}/admin/orders/${extra.orderId}` }],
+          [{ text: "Відкрити замовлення", url: extra.orderUrl || `${site}/admin/orders/${extra.orderId}` }],
           extra.phone ? [{ text: "Зателефонувати", url: `tel:${extra.phone}` }] : [],
         ].filter((r) => r.length),
       }
@@ -29,6 +29,12 @@ export async function notifyTelegram(text: string, extra?: { orderId?: string; p
     }),
   });
   return { ok: res.ok };
+}
+
+function deliveryLabel(value: string) {
+  if (value === "nova_poshta_locker") return "Нова пошта, поштомат";
+  if (value === "nova_poshta_branch") return "Нова пошта, відділення";
+  return value === "nova_poshta" ? "Нова пошта" : value;
 }
 
 export function formatOrderTelegram(o: {
@@ -51,7 +57,7 @@ export function formatOrderTelegram(o: {
     o.telegram ? `Telegram:\n${o.telegram}` : "",
     `Товари:\n${o.items}`,
     `Сума:\n${Math.round(o.total)} грн`,
-    `Доставка:\n${o.delivery}`,
+    `Доставка:\n${deliveryLabel(o.delivery)}`,
     o.city ? `Місто:\n${o.city}` : "",
     o.warehouse ? `Адреса:\n${o.warehouse}` : "",
   ]

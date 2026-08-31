@@ -8,10 +8,12 @@ export async function GET(req: NextRequest) {
   const city = req.nextUrl.searchParams.get("city") || "";
   const cityRef = req.nextUrl.searchParams.get("cityRef") || "";
   const q = req.nextUrl.searchParams.get("q") || "";
+  const type = req.nextUrl.searchParams.get("type");
   if (cityRef) {
-    const warehouses = await searchWarehouses(key, cityRef, q);
-    return NextResponse.json({ warehouses });
+    const warehouseKind = type === "branch" || type === "locker" ? type : "all";
+    const warehouses = await searchWarehouses(key, cityRef, q, warehouseKind);
+    return NextResponse.json({ warehouses, configured: Boolean(key) });
   }
   const cities = await searchCities(key, city);
-  return NextResponse.json({ cities });
+  return NextResponse.json({ cities, configured: Boolean(key) });
 }

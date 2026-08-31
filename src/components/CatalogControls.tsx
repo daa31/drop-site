@@ -3,7 +3,7 @@
 import { SlidersHorizontal, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/routing";
 import { tJson } from "@/lib/utils";
 
@@ -23,8 +23,9 @@ export function CatalogControls({
   const sp = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const timerRef = useRef<number | null>(null);
 
-  function apply(form: FormData) {
+  function apply(form: FormData, closePanel = false) {
     const next = new URLSearchParams(sp.toString());
     const category = String(form.get("category") || "");
     for (const key of ["q", "sort", "brand", "min", "max", "lens", "af", "photo", "polar", "rx", "il"]) {
@@ -36,13 +37,28 @@ export function CatalogControls({
     next.delete("page");
     const query = next.toString();
     router.push(`${category ? `/catalog/${category}` : "/catalog"}${query ? `?${query}` : ""}`);
-    setOpen(false);
+    if (closePanel) setOpen(false);
   }
+
+  function scheduleApply(form: HTMLFormElement) {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => apply(new FormData(form)), 300);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const inputClass = "h-11 w-full rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-ink";
 
   const form = (
-    <form className="space-y-5 text-sm" action={(fd) => apply(fd)}>
+    <form
+      className="space-y-5 text-sm"
+      action={(fd) => apply(fd, true)}
+      onChange={(event) => scheduleApply(event.currentTarget)}
+    >
       <div>
         <span className="mb-2 block text-xs uppercase tracking-wide text-graphite/45">{t("category")}</span>
         <select name="category" defaultValue={currentCategory || ""} className={inputClass}>
@@ -115,7 +131,6 @@ export function CatalogControls({
         ))}
       </div>
 
-      <button className="flex h-11 w-full items-center justify-center rounded-full bg-ink px-4 text-sm font-semibold text-white">{t("apply")}</button>
       <button type="button" className="h-10 w-full rounded-full text-sm font-medium text-graphite/60 hover:bg-white" onClick={() => router.push("/catalog")}>
         {t("reset")}
       </button>

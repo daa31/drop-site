@@ -7,9 +7,9 @@ import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, BadgeCheck, CreditCard, Glasses, Headphones, Shield, Sparkles, Truck } from "lucide-react";
 
 const heroImages = [
-  "https://uabest.com.ua/content/images/45/ochky-zashchytnye-s-uplotnytelem-global-visionballistech-1rx-clear-anti-fog-prozrachnye-s-dyoptrycheskoi-vstavkoi-89590291163813_+12e5f756e3.jpg",
-  "https://uabest.com.ua/content/images/21/72829529953435_+5ab1a5bd0a.jpeg",
-  "https://uabest.com.ua/content/images/35/81344492021205_+ffee49b13b.jpeg",
+  "https://uabest.com.ua/content/images/27/ochky-zashchytnye-otkrytye-global-vision-astro-white-g-tech-silver-dzerkalni-siri-v-bilii-opravi-16255559479984_+4312c55d9c.jpg",
+  "https://uabest.com.ua/content/images/47/49072088793328_+05786fc7b2.jpeg",
+  "https://uabest.com.ua/content/images/4/41673240412977_+3f4e44eae5.jpeg",
 ];
 
 const collectionImages = [
@@ -38,8 +38,8 @@ function localCopy(locale: string) {
       recommended: "Рекомендуем",
       statModels: "моделей в каталоге",
       guideEyebrow: "Подбор по задаче",
-      guideTitle: "Locko помогает подобрать очки под конкретную задачу",
-      guideText: "Начните со сценария использования, типа линзы и защиты от запотевания, а затем переходите к подходящим моделям.",
+      guideTitle: "Locko подбирает очки под вашу задачу",
+      guideText: "Укажите, где будете использовать очки, какую линзу хотите и нужен ли Anti-Fog. Покажем модели, которые подходят по этим условиям.",
     };
   }
   if (locale === "en") {
@@ -50,8 +50,8 @@ function localCopy(locale: string) {
       recommended: "Recommended",
       statModels: "models in catalog",
       guideEyebrow: "Selection guide",
-      guideTitle: "Locko helps match eyewear to the task",
-      guideText: "Start with use case, lens type and anti-fog needs, then move directly to matching models.",
+      guideTitle: "Locko matches eyewear to your use case",
+      guideText: "Choose where you will use the eyewear, the lens type and whether you need Anti-Fog. We will show models that fit those conditions.",
     };
   }
   return {
@@ -61,8 +61,8 @@ function localCopy(locale: string) {
     recommended: "Рекомендуємо",
     statModels: "моделей у каталозі",
     guideEyebrow: "Підбір за задачею",
-    guideTitle: "Locko допомагає підібрати окуляри під конкретну задачу",
-    guideText: "Почніть зі сценарію використання, типу лінзи та захисту від запотівання, а потім переходьте до відповідних моделей.",
+    guideTitle: "Locko підбирає окуляри під вашу задачу",
+    guideText: "Оберіть, де будете користуватися окулярами, який тип лінзи потрібен і чи потрібен Anti-Fog. Покажемо моделі, що підходять під ці умови.",
   };
 }
 
@@ -72,7 +72,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const h = await getTranslations({ locale, namespace: "hero" });
   const copy = localCopy(locale);
 
-  const [categories, hits, sale, neu, productsCount] = await Promise.all([
+  const [categories, hits, sale, neu, productsCount, banners] = await Promise.all([
     prisma.category.findMany({
       where: { products: { some: { product: { isActive: true, images: { some: {} } } } } },
       orderBy: { sortOrder: "asc" },
@@ -102,7 +102,21 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       take: 4,
     }),
     prisma.product.count({ where: { isActive: true } }),
+    prisma.banner.findMany({
+      where: { active: true, slot: { startsWith: "home_hero" } },
+      orderBy: [{ sortOrder: "asc" }, { slot: "asc" }],
+    }),
   ]);
+  const heroBanner = banners.find((banner) => banner.slot === "home_hero");
+  const bannerHeroImages = banners
+    .filter((banner) => ["home_hero_1", "home_hero_2", "home_hero_3"].includes(banner.slot))
+    .sort((a, b) => a.slot.localeCompare(b.slot))
+    .map((banner) => banner.image)
+    .filter(Boolean);
+  const activeHeroImages = bannerHeroImages.length >= 3 ? bannerHeroImages.slice(0, 3) : heroImages;
+  const heroTitle = tJson(heroBanner?.title, locale) || h("title");
+  const heroSubtitle = tJson(heroBanner?.subtitle, locale) || h("subtitle");
+  const heroHref = heroBanner?.href || "/catalog";
 
   const why = [
     [Glasses, t("why1t"), t("why1d")],
@@ -133,7 +147,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
       <section className="relative min-h-[calc(100vh-72px)] overflow-hidden bg-ink text-white">
         <div className="absolute inset-0 grid grid-cols-3">
-          {heroImages.map((image, index) => (
+          {activeHeroImages.map((image, index) => (
             <div
               key={image}
               className="relative overflow-hidden"
@@ -164,10 +178,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <div className="container-f relative flex min-h-[calc(100vh-72px)] flex-col justify-end pb-10 pt-24">
           <div className="max-w-4xl pb-8">
             <p className="text-xs uppercase tracking-[0.32em] text-white/60">{copy.brandLine}</p>
-            <h1 className="mt-5 max-w-3xl font-display text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">{h("title")}</h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">{h("subtitle")}</p>
+            <h1 className="mt-5 max-w-3xl font-display text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">{heroTitle}</h1>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">{heroSubtitle}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/catalog" className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-white transition hover:bg-accentHover">
+              <Link href={heroHref} className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-white transition hover:bg-accentHover">
                 {h("catalog")}
                 <ArrowRight size={17} />
               </Link>
@@ -268,8 +282,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </Link>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {hits.map((p) => (
-            <ProductCard key={p.id} locale={locale} p={toCard(p)} />
+          {hits.map((p, index) => (
+            <div key={p.id} className="catalog-item" style={{ animationDelay: `${Math.min(index, 11) * 55}ms` }}>
+              <ProductCard locale={locale} p={toCard(p)} />
+            </div>
           ))}
         </div>
       </section>
@@ -279,6 +295,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-graphite/50">{t("why")}</p>
             <h2 className="mt-2 font-display text-3xl">{t("why")}</h2>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/locko-l-logo.png"
+              alt="Locko"
+              className="mt-6 h-auto w-full max-w-[420px] select-none sm:max-w-[520px] lg:max-w-full"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
           <div className="grid gap-px overflow-hidden rounded-lg border border-black/10 bg-black/10 sm:grid-cols-2">
             {why.map(([Icon, title, desc]) => (
@@ -320,8 +344,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <div>
                 <h2 className="mb-6 font-display text-2xl">{t("sale")}</h2>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  {sale.map((p) => (
-                    <ProductCard key={p.id} locale={locale} p={toCard(p)} />
+                  {sale.map((p, index) => (
+                    <div key={p.id} className="catalog-item" style={{ animationDelay: `${Math.min(index, 11) * 55}ms` }}>
+                      <ProductCard locale={locale} p={toCard(p)} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -330,8 +356,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <div>
                 <h2 className="mb-6 font-display text-2xl">{t("new")}</h2>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  {neu.map((p) => (
-                    <ProductCard key={p.id} locale={locale} p={toCard(p)} />
+                  {neu.map((p, index) => (
+                    <div key={p.id} className="catalog-item" style={{ animationDelay: `${Math.min(index, 11) * 55}ms` }}>
+                      <ProductCard locale={locale} p={toCard(p)} />
+                    </div>
                   ))}
                 </div>
               </div>
