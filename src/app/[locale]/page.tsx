@@ -181,6 +181,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 src={image}
                 alt=""
                 className="h-full w-full object-cover opacity-88"
+                style={{ objectPosition: "35% center" }}
                 loading={index === 0 ? "eager" : "lazy"}
                 decoding="async"
               />
