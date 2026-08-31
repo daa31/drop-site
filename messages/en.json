@@ -16,6 +16,7 @@
     "delivery": "Delivery & payment",
     "contacts": "Contacts",
     "faq": "FAQ",
+    "optics": "Optics",
     "brands": "Brands",
     "menu": "Menu",
     "crm": "CRM"
@@ -154,7 +155,19 @@
     "catalogLink": "Back to catalog"
   },
   "wishlist": { "title": "Wishlist", "empty": "Save products so you don't lose them." },
-  "compare": { "title": "Compare", "empty": "Add models to compare.", "remove": "Remove from compare" },
+  "optics": {
+    "title": "Optics",
+    "eyebrow": "Locko Optics",
+    "intro": "Prescription, photochromic and polarized glasses for comfortable vision anywhere: at work, driving, or on the go.",
+    "dioptricTitle": "Prescription glasses",
+    "dioptricText": "Models for prescription lenses and Rx inserts for everyday wear.",
+    "photoTitle": "Photochromic glasses",
+    "photoText": "Lenses that automatically darken in the sun and clear up indoors.",
+    "polarTitle": "Polarized glasses",
+    "polarText": "Glare reduction for drivers, anglers and outdoor activities.",
+    "empty": "No products in this section yet.",
+    "seoText": "The Optics section brings together glasses that improve visual comfort: prescription solutions and Rx inserts, photochromic lenses with automatic darkening, and polarized models for driving and outdoor relaxation. All items are available for order with Nova Poshta delivery across Ukraine."
+  },
   "guide": {
     "title": "Choose eyewear",
     "q1": "What do you need glasses for?",

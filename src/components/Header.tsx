@@ -194,6 +194,9 @@ export function Header({
           <Link href="/guide" className="rounded-full px-4 py-2 hover:bg-white">
             {t("guide")}
           </Link>
+          <Link href="/optics" className="rounded-full px-4 py-2 hover:bg-white">
+            {t("optics")}
+          </Link>
           <Link href="/brands" className="rounded-full px-4 py-2 hover:bg-white">
             {t("brands")}
           </Link>
@@ -338,6 +341,9 @@ export function Header({
                 ))}
                 <Link href="/guide" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
                   {t("guide")}
+                </Link>
+                <Link href="/optics" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
+                  {t("optics")}
                 </Link>
                 <Link href="/brands" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
                   {t("brands")}

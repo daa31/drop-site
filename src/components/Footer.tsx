@@ -23,6 +23,7 @@ export async function Footer({
           <div className="grid gap-2 text-graphite/80">
             <Link href="/catalog">{t("catalog")}</Link>
             <Link href="/guide">{t("guide")}</Link>
+            <Link href="/optics">{t("optics")}</Link>
             <Link href="/brands">{t("brands")}</Link>
           </div>
         </div>
