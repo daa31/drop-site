@@ -11,7 +11,7 @@ export function ProductGallery({ images, alt }: { images: { url: string }[]; alt
   return (
     <div className="min-w-0">
       <div
-        className="group relative aspect-[4/3] min-h-[260px] w-full overflow-hidden rounded-r-lg border-y border-r border-black/10 bg-white shadow-card sm:min-h-[340px] lg:min-h-[440px] xl:min-h-[480px]"
+        className="group relative aspect-[4/3] min-h-[260px] w-full overflow-hidden rounded-lg border border-black/10 bg-white shadow-card lg:rounded-r-lg lg:border-y lg:border-r lg:border-l-0 sm:min-h-[340px] lg:min-h-[440px] xl:min-h-[480px]"
         onMouseMove={(event) => {
           const rect = event.currentTarget.getBoundingClientRect();
           const x = ((event.clientX - rect.left) / rect.width) * 100;

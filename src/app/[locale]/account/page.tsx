@@ -72,7 +72,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
         />
         <span aria-hidden="true" className="hidden select-none text-graphite/35 sm:block">|</span>
         <div>
-          <div className="text-xs uppercase tracking-wide text-graphite/45">{locale === "en" ? "Login" : "Логін"}</div>
+          <div className="text-xs uppercase tracking-wide text-graphite/45">{locale === "en" ? "Login" : locale === "ru" ? "Логин" : "Логін"}</div>
           <div className="mt-1 min-w-0 truncate text-graphite/60">{user?.username || user?.email || "—"}</div>
         </div>
         <span aria-hidden="true" className="hidden select-none text-graphite/35 sm:block">|</span>

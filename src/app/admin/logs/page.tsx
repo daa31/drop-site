@@ -7,21 +7,25 @@ export default async function Logs() {
     <div>
       <h1 className="font-display text-2xl">Логи</h1>
       <h2 className="mt-6 font-medium">Імпорти</h2>
-      <ul className="text-sm">
-        {imports.map((i) => (
-          <li key={i.id}>
-            {i.createdAt.toISOString()} {i.filename} {i.status}
-          </li>
-        ))}
-      </ul>
+      <div className="overflow-x-auto">
+        <ul className="text-sm">
+          {imports.map((i) => (
+            <li key={i.id} className="whitespace-nowrap">
+              {i.createdAt.toISOString()} {i.filename} {i.status}
+            </li>
+          ))}
+        </ul>
+      </div>
       <h2 className="mt-6 font-medium">Аудит</h2>
-      <ul className="text-sm">
-        {logs.map((l) => (
-          <li key={l.id}>
-            {l.createdAt.toISOString()} {l.actor} {l.action} {l.entity}
-          </li>
-        ))}
-      </ul>
+      <div className="overflow-x-auto">
+        <ul className="text-sm">
+          {logs.map((l) => (
+            <li key={l.id} className="whitespace-nowrap">
+              {l.createdAt.toISOString()} {l.actor} {l.action} {l.entity}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

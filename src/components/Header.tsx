@@ -277,53 +277,55 @@ export function Header({
         </form>
       </div>
 
-      {menu && (
-        <div className="fixed inset-0 z-[60] bg-ink/45 lg:hidden" onClick={() => setMenu(false)}>
-          <div className="h-full w-[88%] max-w-sm bg-[#f8f8f6] p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-6 flex items-center justify-between">
-              <span className="font-display text-lg font-semibold tracking-[0.18em]">Locko</span>
-              <button className="grid h-10 w-10 place-items-center rounded-full bg-white" onClick={() => setMenu(false)} aria-label={closeText}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="mb-4 flex rounded-lg border border-black/10 bg-white p-1 text-xs font-semibold">
-              {locales.map((l) => (
-                <Link
-                  key={l.id}
-                  href={localizedHref}
-                  locale={l.id}
-                  onClick={() => setMenu(false)}
-                  className={`flex-1 rounded-md px-3 py-2 text-center ${l.id === locale ? "bg-ink text-white" : "text-graphite/55"}`}
-                >
-                  {l.label}
+      {menu &&
+        createPortal(
+          <div className="fixed inset-0 z-[60] bg-ink/45 lg:hidden" onClick={() => setMenu(false)}>
+            <div className="h-full w-[88%] max-w-sm overflow-y-auto bg-[#f8f8f6] p-5" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-6 flex items-center justify-between">
+                <span className="font-display text-lg font-semibold tracking-[0.18em]">Locko</span>
+                <button className="grid h-10 w-10 place-items-center rounded-full bg-white" onClick={() => setMenu(false)} aria-label={closeText}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="mb-4 flex rounded-lg border border-black/10 bg-white p-1 text-xs font-semibold">
+                {locales.map((l) => (
+                  <Link
+                    key={l.id}
+                    href={localizedHref}
+                    locale={l.id}
+                    onClick={() => setMenu(false)}
+                    className={`flex-1 rounded-md px-3 py-2 text-center ${l.id === locale ? "bg-ink text-white" : "text-graphite/55"}`}
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="grid gap-2 text-sm">
+                <Link href="/catalog" onClick={() => setMenu(false)} className="rounded-lg bg-ink px-4 py-3 font-semibold text-white">
+                  {t("catalog")}
                 </Link>
-              ))}
-            </div>
-            <div className="grid gap-2 text-sm">
-              <Link href="/catalog" onClick={() => setMenu(false)} className="rounded-lg bg-ink px-4 py-3 font-semibold text-white">
-                {t("catalog")}
-              </Link>
-              {categories.map((c) => (
-                <Link key={c.slug} href={`/catalog/${c.slug}`} onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3 text-graphite">
-                  {tJson(c.name, locale)}
+                {categories.map((c) => (
+                  <Link key={c.slug} href={`/catalog/${c.slug}`} onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3 text-graphite">
+                    {tJson(c.name, locale)}
+                  </Link>
+                ))}
+                <Link href="/guide" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
+                  {t("guide")}
                 </Link>
-              ))}
-              <Link href="/guide" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
-                {t("guide")}
-              </Link>
-              <Link href="/brands" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
-                {t("brands")}
-              </Link>
-              <Link href="/delivery" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
-                {t("delivery")}
-              </Link>
-              <Link href="/contacts" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
-                {t("contacts")}
-              </Link>
+                <Link href="/brands" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
+                  {t("brands")}
+                </Link>
+                <Link href="/delivery" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
+                  {t("delivery")}
+                </Link>
+                <Link href="/contacts" onClick={() => setMenu(false)} className="rounded-lg bg-white px-4 py-3">
+                  {t("contacts")}
+                </Link>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
       {wishOpen && createPortal(
         <div className="fixed inset-0 z-[80] flex justify-end overflow-hidden bg-ink/45" onClick={() => setWishOpen(false)}>
           <aside data-wishlist-drawer className="flex min-h-dvh w-[min(100vw,420px)] flex-col overflow-hidden bg-[#f8f8f6] shadow-[0_24px_80px_rgba(17,18,20,0.28)]" onClick={(e) => e.stopPropagation()}>

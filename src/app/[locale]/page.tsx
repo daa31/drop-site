@@ -175,7 +175,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         </div>
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(17,18,20,0.92),rgba(17,18,20,0.62),rgba(17,18,20,0.22))]" />
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-ink to-transparent" />
-        <div className="container-f relative flex min-h-[calc(100vh-72px)] flex-col justify-end pb-10 pt-24">
+        <div className="container-f relative flex min-h-[calc(100vh-72px)] flex-col justify-end pb-10 pt-[120px] sm:pt-24">
           <div className="max-w-4xl pb-8">
             <p className="text-xs uppercase tracking-[0.32em] text-white/60">{copy.brandLine}</p>
             <h1 className="mt-5 max-w-3xl font-display text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">{heroTitle}</h1>

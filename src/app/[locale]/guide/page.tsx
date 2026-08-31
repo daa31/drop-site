@@ -1,10 +1,11 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { ProductCard, CardProduct } from "@/components/ProductCard";
 
 export default function GuidePage() {
+  const locale = useLocale();
   const t = useTranslations("guide");
   const [step, setStep] = useState(0);
   const [a, setA] = useState({ use: "", lens: "", af: "", rx: "" });
@@ -42,7 +43,7 @@ export default function GuidePage() {
         <h1 className="font-display text-3xl">{t("result")}</h1>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((p) => (
-            <ProductCard key={p.id} p={p} locale="uk" />
+            <ProductCard key={p.id} p={p} locale={locale} />
           ))}
         </div>
       </div>
