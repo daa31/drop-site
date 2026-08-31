@@ -165,13 +165,15 @@ model PriceHistory {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  email     String?
-  phone     String
-  name      String
-  notes     String?
-  createdAt DateTime @default(now())
-  orders    Order[]
+  id         String   @id @default(cuid())
+  email      String?
+  phone      String
+  name       String
+  surname    String?
+  patronymic String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  orders     Order[]
 }
 
 model Order {

@@ -127,6 +127,8 @@
   "checkout": {
     "title": "Оформление заказа",
     "name": "Имя",
+    "surname": "Фамилия",
+    "patronymic": "Отчество",
     "phone": "Телефон",
     "email": "Email",
     "city": "Город",

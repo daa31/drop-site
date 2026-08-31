@@ -126,7 +126,9 @@
   },
   "checkout": {
     "title": "Checkout",
-    "name": "Name",
+    "name": "First name",
+    "surname": "Last name",
+    "patronymic": "Patronymic",
     "phone": "Phone",
     "email": "Email",
     "city": "City",

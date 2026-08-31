@@ -6,11 +6,7 @@ import { toCard } from "@/lib/catalog";
 import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, BadgeCheck, CreditCard, Glasses, Headphones, Shield, Sparkles, Truck } from "lucide-react";
 
-const heroImages = [
-  "https://uabest.com.ua/content/images/27/ochky-zashchytnye-otkrytye-global-vision-astro-white-g-tech-silver-dzerkalni-siri-v-bilii-opravi-16255559479984_+4312c55d9c.jpg",
-  "https://uabest.com.ua/content/images/47/49072088793328_+05786fc7b2.jpeg",
-  "https://uabest.com.ua/content/images/4/41673240412977_+3f4e44eae5.jpeg",
-];
+export const dynamic = "force-dynamic";
 
 const collectionImages = [
   "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=1200&q=82",
@@ -66,13 +62,24 @@ function localCopy(locale: string) {
   };
 }
 
+function randomHeroImages(urls: string[]): string[] {
+  const pool = [...new Set(urls)].filter(Boolean);
+  if (pool.length <= 3) return pool;
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, 3);
+}
+
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
   const h = await getTranslations({ locale, namespace: "hero" });
   const copy = localCopy(locale);
 
-  const [categories, hits, sale, neu, productsCount, banners] = await Promise.all([
+  const [categories, hits, sale, neu, productsCount, banners, productImages] = await Promise.all([
     prisma.category.findMany({
       where: { products: { some: { product: { isActive: true, images: { some: {} } } } } },
       orderBy: { sortOrder: "asc" },
@@ -106,6 +113,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       where: { active: true, slot: { startsWith: "home_hero" } },
       orderBy: [{ sortOrder: "asc" }, { slot: "asc" }],
     }),
+    prisma.productImage.findMany({
+      where: { product: { isActive: true } },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
   const heroBanner = banners.find((banner) => banner.slot === "home_hero");
   const bannerHeroImages = banners
@@ -113,7 +124,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     .sort((a, b) => a.slot.localeCompare(b.slot))
     .map((banner) => banner.image)
     .filter(Boolean);
-  const activeHeroImages = bannerHeroImages.length >= 3 ? bannerHeroImages.slice(0, 3) : heroImages;
+  const activeHeroImages =
+    bannerHeroImages.length >= 3
+      ? bannerHeroImages.slice(0, 3)
+      : randomHeroImages(productImages.map((img) => img.url));
   const heroTitle = tJson(heroBanner?.title, locale) || h("title");
   const heroSubtitle = tJson(heroBanner?.subtitle, locale) || h("subtitle");
   const heroHref = heroBanner?.href || "/catalog";

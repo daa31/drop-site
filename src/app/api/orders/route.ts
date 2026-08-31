@@ -12,6 +12,8 @@ import { normalizeLocale, orderStatusLabel } from "@/lib/localization";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
+  surname: z.string().max(80).optional().or(z.literal("")),
+  patronymic: z.string().max(80).optional().or(z.literal("")),
   phone: z.string().min(10).max(20),
   email: z.string().email().optional().or(z.literal("")),
   city: z.string().min(2),
@@ -106,6 +108,8 @@ export async function POST(req: NextRequest) {
     const customer = await prisma.customer.create({
       data: {
         name: parsed.data.name,
+        surname: parsed.data.surname || null,
+        patronymic: parsed.data.patronymic || null,
         phone: parsed.data.phone,
         email: parsed.data.email || null,
         notes: telegram ? `Telegram: ${telegram}${noContact ? " (не турбувати)" : ""}` : noContact ? "Не зв'язуватись з клієнтом" : null,
@@ -157,7 +161,7 @@ export async function POST(req: NextRequest) {
         await notifyTelegram(
           formatOrderTelegram({
             number,
-            name: parsed.data.name,
+            name: [parsed.data.surname, parsed.data.name, parsed.data.patronymic].filter(Boolean).join(" "),
             phone: parsed.data.phone,
             telegram: noContact ? `${telegram} (не турбувати)` : telegram,
             items: items.map((i) => `${i.name} x ${i.qty}`).join("\n"),

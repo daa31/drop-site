@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/routing";
 
-type FieldName = "name" | "phone" | "email" | "telegram" | "city" | "warehouse" | "agree";
+type FieldName = "name" | "surname" | "patronymic" | "phone" | "email" | "telegram" | "city" | "warehouse" | "agree";
 type FieldErrors = Partial<Record<FieldName, string>>;
 type CityOption = { name: string; ref?: string; area?: string };
 type DeliveryMethod = "nova_poshta_branch" | "nova_poshta_locker";
@@ -108,6 +108,8 @@ function localCopy(locale: string) {
       server: "Не удалось оформить заказ. Проверьте данные и попробуйте еще раз.",
       invalid: {
         name: "Введите имя минимум из 2 символов.",
+        surname: "Введите фамилию.",
+        patronymic: "Введите отчество.",
         phone: "Введите телефон минимум из 10 символов.",
         email: "Введите корректный email или оставьте поле пустым.",
         city: "Введите город.",
@@ -136,6 +138,8 @@ function localCopy(locale: string) {
       server: "Could not place the order. Check the data and try again.",
       invalid: {
         name: "Enter a name with at least 2 characters.",
+        surname: "Enter your last name.",
+        patronymic: "Enter your patronymic.",
         phone: "Enter a phone number with at least 10 characters.",
         email: "Enter a valid email or leave it empty.",
         city: "Enter a city.",
@@ -163,6 +167,8 @@ function localCopy(locale: string) {
     server: "Не вдалося оформити замовлення. Перевірте дані та спробуйте ще раз.",
     invalid: {
       name: "Введіть ім'я мінімум з 2 символів.",
+      surname: "Введіть прізвище.",
+      patronymic: "Введіть по батькові.",
       phone: "Введіть телефон мінімум з 10 символів.",
       email: "Введіть коректний email або залиште поле порожнім.",
       city: "Введіть місто.",
@@ -357,6 +363,8 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               name: fd.get("name"),
+              surname: fd.get("surname"),
+              patronymic: fd.get("patronymic"),
               phone: fd.get("phone"),
               email: fd.get("email"),
               city: fd.get("city"),
@@ -400,12 +408,20 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
           <User size={18} />
           {copy.contacts}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <input name="name" placeholder={t("name")} aria-invalid={Boolean(fieldErrors.name)} className={`${field} w-full`} />
             {errorFor("name")}
           </div>
           <div>
+            <input name="surname" placeholder={t("surname")} aria-invalid={Boolean(fieldErrors.surname)} className={`${field} w-full`} />
+            {errorFor("surname")}
+          </div>
+          <div>
+            <input name="patronymic" placeholder={t("patronymic")} aria-invalid={Boolean(fieldErrors.patronymic)} className={`${field} w-full`} />
+            {errorFor("patronymic")}
+          </div>
+          <div className="sm:col-span-3">
             <input
               name="phone"
               type="tel"
@@ -422,7 +438,7 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
             />
             {errorFor("phone")}
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-3">
             <input name="email" type="email" placeholder={t("email")} aria-invalid={Boolean(fieldErrors.email)} className={`${field} w-full`} />
             {errorFor("email")}
           </div>
