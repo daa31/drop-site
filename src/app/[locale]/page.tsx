@@ -177,13 +177,16 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={image}
-                alt=""
-                className="h-full w-full scale-[0.82] object-contain opacity-85"
-                loading={index === 0 ? "eager" : "lazy"}
-                decoding="async"
-              />
+              <div className="absolute inset-0 overflow-hidden p-[12%]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image}
+                  alt=""
+                  className="h-full w-full rounded-xl object-cover opacity-85"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                />
+              </div>
             </div>
           ))}
         </div>
