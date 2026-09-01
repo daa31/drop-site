@@ -6,7 +6,9 @@ import { OrderActionButton } from "@/components/OrderActionButton";
 import { ADMIN_COMMON_COPY, ADMIN_ORDER_DETAIL_COPY } from "@/lib/admin-copy";
 import { getAdminLocale } from "@/lib/admin-locale";
 import { ORDER_STATUS_ORDER, formatDateTime, orderStatusLabel, type Locale } from "@/lib/localization";
-import { customerFullName } from "@/lib/email";
+import { customerFullName, sendOrderCancelledEmails } from "@/lib/email";
+import { siteSettings } from "@/lib/settings";
+import { publicSiteBase } from "@/lib/utils";
 
 function c(key: keyof typeof ADMIN_COMMON_COPY, locale: Locale) {
   return ADMIN_COMMON_COPY[key][locale];
@@ -164,6 +166,32 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 statusHistory: status !== order.status ? { create: { from: order.status, to: status } } : undefined,
               },
             });
+            if (status === "cancelled") {
+              void (async () => {
+                try {
+                  const settings = await siteSettings();
+                  const base = publicSiteBase(settings);
+                  const adminUrl = `${base}/admin/orders/${id}`;
+                  const fresh = await prisma.order.findUnique({ where: { id }, include: { customer: true, items: true } });
+                  if (!fresh) return;
+                  const result = await sendOrderCancelledEmails({ settings, order: fresh, adminUrl, source: "admin" });
+                  await prisma.notification
+                    .create({
+                      data: {
+                        channel: "email",
+                        title: `Order #${fresh.number} cancelled`,
+                        body: `Order #${fresh.number} cancelled by admin. Manager email: ${result.admin.message} Customer email: ${result.customer.message}`,
+                        status: result.admin.status === "failed" || result.customer.status === "failed" ? "failed" : "sent",
+                      },
+                    })
+                    .catch(() => {});
+                } catch {
+                  await prisma.notification
+                    .create({ data: { channel: "email", title: `Order #${order.number} cancelled (email error)`, body: "Cancellation email failed.", status: "failed" } })
+                    .catch(() => {});
+                }
+              })();
+            }
             redirect(`/admin/orders/${id}`);
           }}
         >

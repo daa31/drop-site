@@ -465,12 +465,12 @@ export async function sendOrderNotificationEmail({
   return sendMail({ settings, from, to, subject, text, html: orderHtml(order, adminUrl, noContact, telegram) });
 }
 
-function cancelAdminCopy(locale: string) {
+function cancelAdminCopy(locale: string, byAdmin = false) {
   const current = normalizeLocale(locale);
   if (current === "en") {
     return {
-      subject: (number: number) => `Order #${number} cancelled by customer`,
-      intro: "The customer has cancelled this order. Please do not ship it.",
+      subject: (number: number) => (byAdmin ? `Order #${number} cancelled` : `Order #${number} cancelled by customer`),
+      intro: byAdmin ? "The order has been cancelled. Please do not ship it." : "The customer has cancelled this order. Please do not ship it.",
       customer: "Customer",
       phone: "Phone",
       email: "Email",
@@ -482,8 +482,8 @@ function cancelAdminCopy(locale: string) {
   }
   if (current === "ru") {
     return {
-      subject: (number: number) => `Заказ #${number} отменён клиентом`,
-      intro: "Клиент отменил этот заказ. Пожалуйста, не отправляйте его.",
+      subject: (number: number) => (byAdmin ? `Заказ #${number} отменён` : `Заказ #${number} отменён клиентом`),
+      intro: byAdmin ? "Заказ отменён. Пожалуйста, не отправляйте его." : "Клиент отменил этот заказ. Пожалуйста, не отправляйте его.",
       customer: "Клиент",
       phone: "Телефон",
       email: "Email",
@@ -494,8 +494,8 @@ function cancelAdminCopy(locale: string) {
     };
   }
   return {
-    subject: (number: number) => `Замовлення №${number} скасоване клієнтом`,
-    intro: "Клієнт скасував це замовлення. Будь ласка, не відправляйте його.",
+    subject: (number: number) => (byAdmin ? `Замовлення №${number} скасоване` : `Замовлення №${number} скасоване клієнтом`),
+    intro: byAdmin ? "Замовлення скасоване. Будь ласка, не відправляйте його." : "Клієнт скасував це замовлення. Будь ласка, не відправляйте його.",
     customer: "Клієнт",
     phone: "Телефон",
     email: "Email",
@@ -506,8 +506,33 @@ function cancelAdminCopy(locale: string) {
   };
 }
 
-function cancelCustomerCopy(_locale: string) {
-  return { subject: () => "", greeting: () => "", intro: "", items: "", total: "", track: "" };
+function cancelCustomerCopy(locale: string) {
+  const current = normalizeLocale(locale);
+  if (current === "en") {
+    return {
+      subject: (number: number) => `Order #${number} cancelled`,
+      greeting: (name: string) => `Hello, ${name}!`,
+      intro: "Your order has been cancelled. If you did not cancel it or have any questions, please contact us in Telegram: @LockoShop.",
+      items: "Items",
+      total: "Total",
+    };
+  }
+  if (current === "ru") {
+    return {
+      subject: (number: number) => `Ваш заказ №${number} отменён`,
+      greeting: (name: string) => `Здравствуйте, ${name}!`,
+      intro: "Вы отменили заказ. Если вы этого не делали или у вас есть вопросы, напишите нам в Telegram: @LockoShop.",
+      items: "Товары",
+      total: "Итого",
+    };
+  }
+  return {
+    subject: (number: number) => `Ваше замовлення №${number} скасоване`,
+    greeting: (name: string) => `Вітаємо, ${name}!`,
+    intro: "Ви скасували замовлення. Якщо ви цього не робили або маєте запитання, зверніться до нас у Telegram: @LockoShop.",
+    items: "Товари",
+    total: "Разом",
+  };
 }
 
 function mailFrom(settings: Record<string, string>, fallbackTo: string) {
@@ -544,15 +569,17 @@ export async function sendOrderCancelledEmails({
   settings,
   order,
   adminUrl,
+  source = "customer",
 }: {
   settings: Record<string, string>;
   order: OrderWithMailData;
   adminUrl: string;
+  source?: "customer" | "admin";
 }): Promise<{ admin: MailResult; customer: MailResult }> {
   const locale = normalizeLocale(order.locale);
   const customer = order.customer;
 
-  const ac = cancelAdminCopy(locale);
+  const ac = cancelAdminCopy(locale, source === "admin");
   const adminTo =
     setting(settings, "order_notification_email", "ORDER_NOTIFICATION_EMAIL") || setting(settings, "email", "ADMIN_EMAIL");
   const adminSubject = ac.subject(order.number);
@@ -577,9 +604,33 @@ export async function sendOrderCancelledEmails({
       })
     : { status: "skipped", message: "Recipient email is not configured." };
 
-  void cancelCustomerCopy(locale);
+  const cc = cancelCustomerCopy(locale);
+  const customerSubject = cc.subject(order.number);
+  const customerLines = [`${cc.items} №${order.number}`, ...orderLines(order).split("\n")];
+  const customerTo = customer?.email?.trim();
+  const customerMail: MailResult = customerTo
+    ? await sendMail({
+        settings,
+        from: mailFrom(settings, customerTo),
+        to: customerTo,
+        subject: customerSubject,
+        text: [
+          customerSubject,
+          "",
+          cc.greeting(customer?.name || ""),
+          cc.intro,
+          "",
+          ...customerLines,
+          "",
+          `${cc.total}: ${formatPrice(order.total, locale)}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        html: cancelMailHtml(customerSubject, cc.intro, [...customerLines, `${cc.total}: ${formatPrice(order.total, locale)}`], ""),
+      })
+    : { status: "skipped", message: "No customer email." };
 
-  return { admin, customer: { status: "skipped", message: "Customer notifications are disabled." } };
+  return { admin, customer: customerMail };
 }
 
 export async function sendTestEmail(settings: Record<string, string>): Promise<MailResult> {
