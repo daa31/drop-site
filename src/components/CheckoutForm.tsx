@@ -574,7 +574,13 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
                   setShowCityOptions(true);
                 }}
                 onFocus={() => setShowCityOptions(true)}
-                onBlur={() => window.setTimeout(() => setShowCityOptions(false), 120)}
+                onBlur={() => {
+                  window.setTimeout(() => setShowCityOptions(false), 120);
+                  if (!cityRef && city.trim()) {
+                    const match = cityOptions.find((o) => o.ref && normalizeCity(o.name) === normalizeCity(city));
+                    if (match) selectCity(match);
+                  }
+                }}
                 placeholder={t("city")}
                 aria-invalid={Boolean(fieldErrors.city)}
                 aria-expanded={showCityOptions && cityOptions.length > 0}
