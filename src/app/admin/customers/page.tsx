@@ -3,6 +3,7 @@ import { getAdminLocale } from "@/lib/admin-locale";
 import { prisma } from "@/lib/db";
 import { formatShortDate, type Locale } from "@/lib/localization";
 import { formatPrice } from "@/lib/utils";
+import { customerFullName } from "@/lib/email";
 
 function c(key: keyof typeof ADMIN_COMMON_COPY, locale: Locale) {
   return ADMIN_COMMON_COPY[key][locale];
@@ -75,7 +76,7 @@ export default async function Customers() {
               {rows.map(({ customer, orders, revenue, profit, lastOrder }) => (
                 <tr key={customer.id} className="border-t border-black/5">
                   <td className="px-5 py-3">
-                    <div className="font-medium">{customer.name}</div>
+                    <div className="font-medium">{customerFullName(customer)}</div>
                     {customer.notes && <div className="mt-0.5 text-xs text-graphite/50">{customer.notes}</div>}
                   </td>
                   <td className="py-3">

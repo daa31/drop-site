@@ -29,6 +29,11 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
+export function customerFullName(customer: Pick<Customer, "name" | "surname" | "patronymic"> | null | undefined) {
+  if (!customer) return "-";
+  return [customer.surname, customer.name, customer.patronymic].filter(Boolean).join(" ") || "-";
+}
+
 function mailCopy(locale: string) {
   const current = normalizeLocale(locale);
   if (current === "en") {
@@ -133,7 +138,7 @@ function orderHtml(order: OrderWithMailData, adminUrl: string, noContact = false
         <p style="margin:0 0 18px;color:#555">${escapeHtml(c.intro)}</p>
         ${noContact ? `<p style="margin:0 0 18px;color:#dc2626;font-weight:700;font-size:15px">${escapeHtml(c.noContact)}</p>` : ""}
         <table style="width:100%;border-collapse:collapse;font-size:14px">
-          <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.customer)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(customer?.name || "-")}</td></tr>
+          <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.customer)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(customerFullName(customer))}</td></tr>
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.phone)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(customer?.phone || "-")}</td></tr>
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.email)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(customer?.email || "-")}</td></tr>
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.city)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(order.deliveryCity || "-")}</td></tr>
@@ -434,7 +439,7 @@ export async function sendOrderNotificationEmail({
     subject,
     "",
     noContact ? c.noContact.toUpperCase() : "",
-    `${c.customer}: ${customer?.name || "-"}`,
+    `${c.customer}: ${customerFullName(customer)}`,
     `${c.phone}: ${customer?.phone || "-"}`,
     `${c.email}: ${customer?.email || "-"}`,
     `${c.city}: ${order.deliveryCity || "-"}`,
@@ -545,7 +550,7 @@ export async function sendOrderCancelledEmails({
     setting(settings, "order_notification_email", "ORDER_NOTIFICATION_EMAIL") || setting(settings, "email", "ADMIN_EMAIL");
   const adminSubject = ac.subject(order.number);
   const adminLines = [
-    `${ac.customer}: ${customer?.name || "-"}`,
+    `${ac.customer}: ${customerFullName(customer)}`,
     `${ac.phone}: ${customer?.phone || "-"}`,
     `${ac.email}: ${customer?.email || "-"}`,
     `${ac.city}: ${order.deliveryCity || "-"}`,

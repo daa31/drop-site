@@ -5,6 +5,7 @@ import { getAdminLocale } from "@/lib/admin-locale";
 import { prisma } from "@/lib/db";
 import { formatPrice } from "@/lib/utils";
 import { formatDateTime, orderStatusClass, orderStatusLabel, type Locale } from "@/lib/localization";
+import { customerFullName } from "@/lib/email";
 
 const PERIODS = [
   { id: "7", labelKey: "sevenDays", days: 7 },
@@ -97,7 +98,7 @@ export default async function AdminHome({
 
     const customerKey = order.customerId || order.customer?.phone || order.id;
     const customer = customerStats.get(customerKey) || {
-      name: order.customer?.name || "-",
+      name: customerFullName(order.customer),
       phone: order.customer?.phone || "",
       orders: 0,
       revenue: 0,
@@ -309,7 +310,7 @@ export default async function AdminHome({
                     </Link>
                   </td>
                   <td className="py-3">
-                    <div>{order.customer?.name || "-"}</div>
+                    <div>{customerFullName(order.customer)}</div>
                     <div className="text-xs text-graphite/50">{order.customer?.phone}</div>
                   </td>
                   <td className="py-3">

@@ -6,6 +6,7 @@ import { OrderActionButton } from "@/components/OrderActionButton";
 import { ADMIN_COMMON_COPY, ADMIN_ORDER_DETAIL_COPY } from "@/lib/admin-copy";
 import { getAdminLocale } from "@/lib/admin-locale";
 import { ORDER_STATUS_ORDER, formatDateTime, orderStatusLabel, type Locale } from "@/lib/localization";
+import { customerFullName } from "@/lib/email";
 
 function c(key: keyof typeof ADMIN_COMMON_COPY, locale: Locale) {
   return ADMIN_COMMON_COPY[key][locale];
@@ -63,7 +64,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
           <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <div className="text-xs text-graphite/45">{d("name", locale)}</div>
-              <div className="font-medium">{order.customer?.name || "-"}</div>
+              <div className="font-medium">{customerFullName(order.customer)}</div>
             </div>
             <div>
               <div className="text-xs text-graphite/45">{d("phone", locale)}</div>
