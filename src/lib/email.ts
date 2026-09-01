@@ -44,6 +44,7 @@ function mailCopy(locale: string) {
       customer: "Customer",
       phone: "Phone",
       email: "Email",
+      telegram: "Telegram",
       city: "City",
       warehouse: "Branch",
       payment: "Payment",
@@ -65,6 +66,7 @@ function mailCopy(locale: string) {
       customer: "Клиент",
       phone: "Телефон",
       email: "Email",
+      telegram: "Telegram",
       city: "Город",
       warehouse: "Отделение",
       payment: "Оплата",
@@ -85,6 +87,7 @@ function mailCopy(locale: string) {
     customer: "Клієнт",
     phone: "Телефон",
     email: "Email",
+    telegram: "Telegram",
     city: "Місто",
     warehouse: "Відділення",
     payment: "Оплата",
@@ -113,7 +116,7 @@ function orderLines(order: OrderWithMailData) {
     .join("\n");
 }
 
-function orderHtml(order: OrderWithMailData, adminUrl: string, noContact = false) {
+function orderHtml(order: OrderWithMailData, adminUrl: string, noContact = false, telegram = "") {
   const customer = order.customer;
   const locale = normalizeLocale(order.locale);
   const c = mailCopy(locale);
@@ -141,6 +144,7 @@ function orderHtml(order: OrderWithMailData, adminUrl: string, noContact = false
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.customer)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(customerFullName(customer))}</td></tr>
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.phone)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(customer?.phone || "-")}</td></tr>
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.email)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(customer?.email || "-")}</td></tr>
+          ${telegram ? `<tr><td style="padding:4px 0;color:#666">${escapeHtml(c.telegram)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(telegram)}</td></tr>` : ""}
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.city)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(order.deliveryCity || "-")}</td></tr>
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.warehouse)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(order.warehouse || "-")}</td></tr>
           <tr><td style="padding:4px 0;color:#666">${escapeHtml(c.payment)}</td><td style="padding:4px 0;text-align:right">${escapeHtml(paymentMethodLabel(order.paymentMethod, locale))}</td></tr>
@@ -417,11 +421,13 @@ export async function sendOrderNotificationEmail({
   order,
   adminUrl,
   noContact = false,
+  telegram = "",
 }: {
   settings: Record<string, string>;
   order: OrderWithMailData;
   adminUrl: string;
   noContact?: boolean;
+  telegram?: string;
 }): Promise<MailResult> {
   const to =
     setting(settings, "order_notification_email", "ORDER_NOTIFICATION_EMAIL") ||
@@ -442,6 +448,7 @@ export async function sendOrderNotificationEmail({
     `${c.customer}: ${customerFullName(customer)}`,
     `${c.phone}: ${customer?.phone || "-"}`,
     `${c.email}: ${customer?.email || "-"}`,
+    telegram ? `${c.telegram}: ${telegram}` : "",
     `${c.city}: ${order.deliveryCity || "-"}`,
     `${c.warehouse}: ${order.warehouse || "-"}`,
     `${c.payment}: ${paymentMethodLabel(order.paymentMethod, locale)}`,
@@ -455,7 +462,7 @@ export async function sendOrderNotificationEmail({
     .filter(Boolean)
     .join("\n");
 
-  return sendMail({ settings, from, to, replyTo: customer?.email || undefined, subject, text, html: orderHtml(order, adminUrl, noContact) });
+  return sendMail({ settings, from, to, subject, text, html: orderHtml(order, adminUrl, noContact, telegram) });
 }
 
 function cancelAdminCopy(locale: string) {

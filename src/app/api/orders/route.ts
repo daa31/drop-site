@@ -195,6 +195,7 @@ export async function POST(req: NextRequest) {
           order,
           adminUrl,
           noContact,
+          telegram,
         });
 
         await prisma.notification.create({

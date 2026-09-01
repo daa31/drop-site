@@ -11,7 +11,7 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
 
 type FieldName = "name" | "surname" | "patronymic" | "phone" | "email" | "telegram" | "city" | "warehouse" | "agree";
 type FieldErrors = Partial<Record<FieldName, string>>;
-type CityOption = { name: string; ref?: string; area?: string };
+type CityOption = { name: string; ref?: string; area?: string; branch?: boolean };
 type DeliveryMethod = "nova_poshta_branch" | "nova_poshta_locker";
 type WarehouseOption = { name: string; ref?: string; category?: string; number?: string; address?: string };
 
@@ -94,11 +94,19 @@ function fallbackCities(locale: string, query: string): CityOption[] {
 function mergeCities(primary: CityOption[], fallback: CityOption[]) {
   const seen = new Set<string>();
   return [...primary, ...fallback].filter((city) => {
-    const key = `${normalizeCity(city.name)}:${normalizeCity(city.area || "")}`;
+    const key = normalizeCity(city.name);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+function filterWarehouseOptions(list: WarehouseOption[], query: string): WarehouseOption[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return list;
+  return list.filter((item) =>
+    [item.name, item.address, item.number ?? ""].some((value) => (value || "").toLowerCase().includes(needle)),
+  );
 }
 
 function localCopy(locale: string) {
@@ -200,6 +208,7 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const warehouseInputRef = useRef<HTMLInputElement>(null);
+  const warehouseCacheRef = useRef<Map<string, WarehouseOption[]>>(new Map());
   const [generalError, setGeneralError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -304,8 +313,16 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
                 name: locale === "ru" ? item.DescriptionRu || item.Description : item.Description,
                 ref: item.Ref,
                 area: locale === "ru" ? item.AreaDescriptionRu || item.AreaDescription : item.AreaDescription,
+                branch: item.IsBranch === "1",
               }))
               .filter((item: CityOption) => item.name)
+              .sort((a: CityOption, b: CityOption) => {
+                const aExact = normalizeCity(a.name) === normalizeCity(query) ? 0 : 1;
+                const bExact = normalizeCity(b.name) === normalizeCity(query) ? 0 : 1;
+                if (aExact !== bExact) return aExact - bExact;
+                if (a.branch !== b.branch) return a.branch ? -1 : 1;
+                return 0;
+              })
               .slice(0, 10)
           : [];
         setCityOptions(mergeCities(remote, fallback).slice(0, 10));
@@ -327,14 +344,26 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
       return;
     }
 
+    const type = deliveryMethod === "nova_poshta_locker" ? "locker" : "branch";
+    const cacheKey = `${cityRef}:${type}:${locale}`;
+    const cached = warehouseCacheRef.current.get(cacheKey);
+    const q = warehouse.trim();
+
+    if (cached) {
+      const quick = filterWarehouseOptions(cached, q);
+      setWarehouseOptions(quick);
+      setWarehouseLoading(false);
+      if (quick.length > 0 || q.length < 2) return;
+    }
+
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setWarehouseLoading(true);
       try {
-        const type = deliveryMethod === "nova_poshta_locker" ? "locker" : "branch";
-        const params = new URLSearchParams({ cityRef, type, q: warehouse.trim() });
+        const params = new URLSearchParams({ cityRef, type, q });
         const res = await fetch(`/api/np?${params.toString()}`, { signal: controller.signal });
         const data = await res.json().catch(() => ({}));
+        if (controller.signal.aborted) return;
         const remote = Array.isArray(data.warehouses)
           ? data.warehouses
               .map((item: Record<string, string>) => ({
@@ -347,9 +376,10 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
               .filter((item: WarehouseOption) => item.name)
               .slice(0, 80)
           : [];
-        setWarehouseOptions(remote);
+        if (!q) warehouseCacheRef.current.set(cacheKey, remote);
+        setWarehouseOptions(q ? remote : filterWarehouseOptions(remote, q));
       } catch {
-        if (!controller.signal.aborted) setWarehouseOptions([]);
+        // keep previous options on failure (rate limit, network)
       } finally {
         if (!controller.signal.aborted) setWarehouseLoading(false);
       }
@@ -359,7 +389,7 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [cityRef, deliveryMethod, locale, showWarehouseOptions, warehouse]);
+  }, [cityRef, deliveryMethod, locale, warehouse]);
 
   return (
     <form
