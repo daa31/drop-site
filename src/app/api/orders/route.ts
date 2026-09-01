@@ -14,8 +14,8 @@ import { verifyTurnstile } from "@/lib/turnstile";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
-  surname: z.string().max(80).optional().or(z.literal("")),
-  patronymic: z.string().max(80).optional().or(z.literal("")),
+  surname: z.string().min(1).max(80),
+  patronymic: z.string().min(1).max(80),
   phone: z.string().min(10).max(20),
   email: z.string().email().optional().or(z.literal("")),
   city: z.string().min(2),

@@ -226,6 +226,8 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
   function validate(fd: FormData, noContactValue: boolean) {
     const next: FieldErrors = {};
     const name = String(fd.get("name") || "").trim();
+    const surname = String(fd.get("surname") || "").trim();
+    const patronymic = String(fd.get("patronymic") || "").trim();
     const phone = String(fd.get("phone") || "").trim();
     const email = String(fd.get("email") || "").trim();
     const telegram = String(fd.get("telegram") || "").trim();
@@ -234,6 +236,8 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
     const agree = fd.get("agree") === "on";
 
     if (name.length < 2) next.name = copy.invalid.name;
+    if (!surname) next.surname = copy.invalid.surname;
+    if (!patronymic) next.patronymic = copy.invalid.patronymic;
     if (phone.replace(/\D/g, "").length < 10) next.phone = copy.invalid.phone;
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = copy.invalid.email;
     if (!noContactValue && !telegram) next.telegram = copy.invalid.telegram;
