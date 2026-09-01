@@ -7,7 +7,7 @@ import { getSession } from "@/lib/auth";
 import { formatOrderTelegram, notifyTelegram } from "@/lib/telegram";
 import { tJson, publicSiteBase, requestBaseUrl } from "@/lib/utils";
 import { siteSettings } from "@/lib/settings";
-import { sendOrderNotificationEmail } from "@/lib/email";
+import { sendOrderCustomerEmail, sendOrderNotificationEmail } from "@/lib/email";
 import { normalizeLocale, orderStatusLabel } from "@/lib/localization";
 import { isHoneypotFilled, HONEYPOT_NAME } from "@/lib/honeypot";
 import { verifyTurnstile } from "@/lib/turnstile";
@@ -205,6 +205,18 @@ export async function POST(req: NextRequest) {
             status: emailResult.status,
           },
         });
+
+        const customerEmailResult = await sendOrderCustomerEmail({ settings, order, noContact });
+        await prisma.notification
+          .create({
+            data: {
+              channel: "email",
+              title: `Customer email #${number}`,
+              body: `Customer email for order #${number}: ${customerEmailResult.message}`,
+              status: customerEmailResult.status,
+            },
+          })
+          .catch(() => {});
       } catch {
         await prisma.notification
           .create({
