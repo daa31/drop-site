@@ -199,6 +199,7 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
   const t = useTranslations("checkout");
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const warehouseInputRef = useRef<HTMLInputElement>(null);
   const [generalError, setGeneralError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -259,8 +260,9 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
     setWarehouse("");
     setWarehouseRef("");
     setWarehouseOptions([]);
-    setShowWarehouseOptions(false);
+    setShowWarehouseOptions(true);
     setShowCityOptions(false);
+    window.setTimeout(() => warehouseInputRef.current?.focus(), 0);
     setFieldErrors((current) => {
       const next = { ...current };
       delete next.city;
@@ -622,6 +624,7 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
               </div>
               <input
                 name="warehouse"
+                ref={warehouseInputRef}
                 value={warehouse}
                 onChange={(event) => {
                   setWarehouse(event.target.value);
