@@ -41,10 +41,17 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+const order = await prisma.order.findUnique({ where: { id }, include: { items: true, customer: true } });
   if (!order) return NextResponse.json({ error: "nf" }, { status: 404 });
 
   if (session.role === "admin") {
+    const settings = await siteSettings();
+    const base = publicSiteBase(settings) || requestBaseUrl(req) || "http://localhost:3001";
+    const adminUrl = new URL(`/admin/orders/${id}`, `${base}/`).toString();
+    const result = await sendOrderCancelledEmails({ settings, order, adminUrl, source: "admin" }).catch((e) => ({
+      admin: { status: "failed" as const, message: String(e) },
+      customer: { status: "failed" as const, message: String(e) },
+    }));
     await prisma.$transaction([
       prisma.auditLog.create({
         data: {
@@ -56,6 +63,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       }),
       prisma.order.delete({ where: { id } }),
     ]);
+    await prisma.notification
+      .create({
+        data: {
+          channel: "email",
+          title: `Order #${order.number} cancelled`,
+          body: `Order #${order.number} cancelled by admin. Manager email: ${result.admin.message} Customer email: ${result.customer.message}`,
+          status: result.admin.status === "failed" || result.customer.status === "failed" ? "failed" : "sent",
+        },
+      })
+      .catch(() => {});
     return NextResponse.json({ ok: true, action: "deleted" });
   }
 
