@@ -20,53 +20,95 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
     .map((item) => {
       const product = productMap.get(item.productId);
       if (!product) return null;
+      const unitPrice = product.retailPrice;
+      const oldPrice = product.oldPrice || null;
+      const total = unitPrice * item.qty;
+      const originalTotal = (oldPrice || unitPrice) * item.qty;
       return {
         id: product.id,
         name: tJson(product.name, locale),
         image: product.images[0]?.url || null,
         qty: item.qty,
-        unitPrice: product.retailPrice,
-        total: product.retailPrice * item.qty,
+        unitPrice,
+        oldPrice,
+        total,
+        originalTotal,
       };
     })
-    .filter(Boolean) as { id: string; name: string; image: string | null; qty: number; unitPrice: number; total: number }[];
+    .filter(Boolean) as {
+    id: string;
+    name: string;
+    image: string | null;
+    qty: number;
+    unitPrice: number;
+    oldPrice: number | null;
+    total: number;
+    originalTotal: number;
+  }[];
+
+  const subtotal = rows.reduce((sum, item) => sum + item.originalTotal, 0);
   const total = rows.reduce((sum, item) => sum + item.total, 0);
+  const discount = subtotal - total;
+
+  const alsoProducts = await prisma.product.findMany({
+    where: { stockStatus: "in_stock", id: { notIn: rows.map((r) => r.id) } },
+    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+    orderBy: { createdAt: "desc" },
+    take: 8,
+  });
+
+  const alsoItems = alsoProducts
+    .map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: tJson(p.name, locale),
+      image: p.images[0]?.url || null,
+      retailPrice: p.retailPrice,
+      oldPrice: p.oldPrice || null,
+    }))
+    .slice(0, 4);
 
   return (
     <div className="container-f py-10">
-      <h1 className="font-display text-3xl">{t("title")}</h1>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-        <div className="min-w-0">
-          <CheckoutForm locale={locale} />
-        </div>
-        <aside className="rounded-lg border border-black/10 bg-white p-5 shadow-card lg:sticky lg:top-28">
-          <h2 className="font-semibold">{tr(CHECKOUT_SUMMARY_COPY.title, locale)}</h2>
-          <div className="mt-4 grid gap-3">
-            {rows.map((item) => (
-              <div key={item.id} className="grid grid-cols-[58px_minmax(0,1fr)_auto] gap-3 rounded-lg bg-mist p-2">
-                <span className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-lg bg-white">
-                  {item.image ? (
-                    <Image src={item.image} alt="" fill sizes="58px" className="object-contain p-1.5" />
-                  ) : (
-                    <span className="text-[10px] font-semibold text-graphite/35">Locko</span>
-                  )}
-                </span>
-                <span className="min-w-0">
-                  <span className="block line-clamp-2 text-sm font-medium leading-snug">{item.name}</span>
-                  <span className="mt-1 block text-xs text-graphite/55">
-                    {tr(CHECKOUT_SUMMARY_COPY.qty, locale)}: {item.qty} × {formatPrice(item.unitPrice, locale)}
-                  </span>
-                </span>
-                <span className="whitespace-nowrap text-sm font-semibold">{formatPrice(item.total, locale)}</span>
-              </div>
-            ))}
-            {rows.length === 0 && <p className="text-sm text-graphite/60">{tr(CHECKOUT_SUMMARY_COPY.empty, locale)}</p>}
+      <div className="mx-auto max-w-2xl">
+        <h1 className="font-display text-3xl">{t("title")}</h1>
+
+        <CheckoutForm
+          locale={locale}
+          cartItems={rows}
+          subtotal={subtotal}
+          discount={discount}
+          total={total}
+        />
+
+        {alsoItems.length > 0 && (
+          <section className="mt-12 rounded-lg border border-black/10 bg-white p-5 shadow-card">
+            <h2 className="mb-4 font-semibold">{tr(CHECKOUT_SUMMARY_COPY.alsoBought, locale)}</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {alsoItems.map((item) => (
+                <a key={item.id} href={`/${locale}/catalog/${item.slug}`} className="group block">
+                  <div className="relative aspect-square overflow-hidden rounded-lg bg-[#eef0ed]">
+                    {item.image ? (
+                      <Image src={item.image} alt={item.name} fill sizes="120px" className="object-contain p-2 transition group-hover:scale-105" />
+                    ) : (
+                      <span className="absolute inset-0 grid place-items-center text-xs text-graphite/30">Locko</span>
+                    )}
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-xs font-medium leading-snug">{item.name}</p>
+                  <p className="mt-1 text-sm font-semibold">{formatPrice(item.retailPrice, locale)}</p>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="mt-8 rounded-lg border border-black/10 bg-white p-5 shadow-card">
+          <h2 className="mb-3 font-semibold">{tr(CHECKOUT_SUMMARY_COPY.quickOrder, locale)}</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-semibold">+380 (___) ___-__-__</span>
           </div>
-          <div className="mt-5 flex items-center justify-between border-t border-black/10 pt-4">
-            <span className="text-sm text-graphite/60">{tr(CHECKOUT_SUMMARY_COPY.total, locale)}</span>
-            <span className="text-xl font-semibold">{formatPrice(total, locale)}</span>
-          </div>
-        </aside>
+          <p className="mt-2 text-xs text-graphite/50">{tr(CHECKOUT_SUMMARY_COPY.quickOrder, locale)}</p>
+        </section>
       </div>
     </div>
   );

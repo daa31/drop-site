@@ -1,11 +1,14 @@
 "use client";
 
-import { Building2, CreditCard, LoaderCircle, MapPin, MessageCircle, MessageSquare, Package, Truck, User } from "lucide-react";
+import { Building2, Check, CreditCard, LoaderCircle, MapPin, MessageCircle, MessageSquare, Package, Pencil, Truck, User } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/routing";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { honeypotField, HONEYPOT_NAME } from "@/lib/honeypot";
+import { CHECKOUT_STEP_COPY, CHECKOUT_SUMMARY_COPY, normalizeLocale, tr } from "@/lib/localization";
+import { formatPrice } from "@/lib/utils";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
 
@@ -14,6 +17,17 @@ type FieldErrors = Partial<Record<FieldName, string>>;
 type CityOption = { name: string; ref?: string; area?: string; branch?: boolean };
 type DeliveryMethod = "nova_poshta_branch" | "nova_poshta_locker";
 type WarehouseOption = { name: string; ref?: string; category?: string; number?: string; address?: string };
+
+export type CartItemData = {
+  id: string;
+  name: string;
+  image: string | null;
+  qty: number;
+  unitPrice: number;
+  oldPrice: number | null;
+  total: number;
+  originalTotal: number;
+};
 
 const DEFAULT_CITIES = [
   { uk: "Київ", ru: "Киев", en: "Kyiv" },
@@ -60,7 +74,7 @@ function normalizeCity(value: string) {
     .toLowerCase()
     .replace(/ё/g, "е")
     .replace(/ї/g, "і")
-    .replace(/['’`-]/g, "")
+    .replace(/[''`-]/g, "")
     .trim();
 }
 
@@ -203,7 +217,19 @@ function localCopy(locale: string) {
   };
 }
 
-export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
+export function CheckoutForm({
+  locale = "uk",
+  cartItems,
+  subtotal,
+  discount,
+  total,
+}: {
+  locale?: string;
+  cartItems: CartItemData[];
+  subtotal: number;
+  discount: number;
+  total: number;
+}) {
   const t = useTranslations("checkout");
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -212,6 +238,7 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
   const [generalError, setGeneralError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4>(1);
   const [city, setCity] = useState("");
   const [cityRef, setCityRef] = useState("");
   const [cityOptions, setCityOptions] = useState<CityOption[]>(() => fallbackCities(locale, ""));
@@ -227,31 +254,47 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
   const turnstileRequired = TURNSTILE_SITE_KEY.length > 0;
   const [phone, setPhone] = useState("");
   const copy = localCopy(locale);
+  const sc = (key: keyof typeof CHECKOUT_STEP_COPY) => tr(CHECKOUT_STEP_COPY[key], locale);
+  const ss = (key: keyof typeof CHECKOUT_SUMMARY_COPY) => tr(CHECKOUT_SUMMARY_COPY[key], locale);
 
   const field =
     "h-12 rounded-lg border border-black/10 bg-white px-4 text-sm outline-none focus:border-ink aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50";
   const errorClass = "mt-1 text-xs font-medium text-red-700";
 
-  function validate(fd: FormData, noContactValue: boolean) {
+  const nameValue = typeof window !== "undefined" ? (formRef.current?.elements.namedItem("name") as HTMLInputElement)?.value || "" : "";
+  const surnameValue = typeof window !== "undefined" ? (formRef.current?.elements.namedItem("surname") as HTMLInputElement)?.value || "" : "";
+
+  function validateStep1(fd: FormData): FieldErrors {
     const next: FieldErrors = {};
     const name = String(fd.get("name") || "").trim();
     const surname = String(fd.get("surname") || "").trim();
     const patronymic = String(fd.get("patronymic") || "").trim();
-    const phone = String(fd.get("phone") || "").trim();
+    const phoneVal = String(fd.get("phone") || "").trim();
     const email = String(fd.get("email") || "").trim();
     const telegram = String(fd.get("telegram") || "").trim();
-    const city = String(fd.get("city") || "").trim();
-    const warehouse = String(fd.get("warehouse") || "").trim();
-    const agree = fd.get("agree") === "on";
-
     if (name.length < 2) next.name = copy.invalid.name;
     if (!surname) next.surname = copy.invalid.surname;
     if (!patronymic) next.patronymic = copy.invalid.patronymic;
-    if (phone.replace(/\D/g, "").length < 10) next.phone = copy.invalid.phone;
+    if (phoneVal.replace(/\D/g, "").length < 10) next.phone = copy.invalid.phone;
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = copy.invalid.email;
-    if (!noContactValue && !telegram) next.telegram = copy.invalid.telegram;
-    if (city.length < 2) next.city = copy.invalid.city;
-    if (!warehouse) next.warehouse = copy.invalid.warehouse;
+    if (!noContact && !telegram) next.telegram = copy.invalid.telegram;
+    return next;
+  }
+
+  function validateStep2(fd: FormData): FieldErrors {
+    const next: FieldErrors = {};
+    const cityVal = String(fd.get("city") || "").trim();
+    const warehouseVal = String(fd.get("warehouse") || "").trim();
+    if (cityVal.length < 2) next.city = copy.invalid.city;
+    if (!warehouseVal) next.warehouse = copy.invalid.warehouse;
+    return next;
+  }
+
+  function validateAll(fd: FormData): FieldErrors {
+    const next: FieldErrors = {};
+    Object.assign(next, validateStep1(fd));
+    Object.assign(next, validateStep2(fd));
+    const agree = fd.get("agree") === "on";
     if (!agree) next.agree = copy.invalid.agree;
     return next;
   }
@@ -294,6 +337,21 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
     });
   }
 
+  function handleContinue(currentStep: 1 | 2 | 3) {
+    const fd = new FormData(formRef.current!);
+    let errors: FieldErrors = {};
+    if (currentStep === 1) errors = validateStep1(fd);
+    else if (currentStep === 2) errors = validateStep2(fd);
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      focusFirstError(errors);
+      return;
+    }
+    setFieldErrors({});
+    setActiveStep((currentStep + 1) as 1 | 2 | 3 | 4);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   useEffect(() => {
     const query = city.trim();
     const fallback = fallbackCities(locale, query);
@@ -301,7 +359,6 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
       setCityOptions(fallback);
       return;
     }
-
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       try {
@@ -330,7 +387,6 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
         if (!controller.signal.aborted) setCityOptions(fallback);
       }
     }, 250);
-
     return () => {
       window.clearTimeout(timer);
       controller.abort();
@@ -343,19 +399,16 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
       setWarehouseLoading(false);
       return;
     }
-
     const type = deliveryMethod === "nova_poshta_locker" ? "locker" : "branch";
     const cacheKey = `${cityRef}:${type}:${locale}`;
     const cached = warehouseCacheRef.current.get(cacheKey);
     const q = warehouse.trim();
-
     if (cached) {
       const quick = filterWarehouseOptions(cached, q);
       setWarehouseOptions(quick);
       setWarehouseLoading(false);
       if (quick.length > 0 || q.length < 2) return;
     }
-
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setWarehouseLoading(true);
@@ -379,30 +432,86 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
         if (!q) warehouseCacheRef.current.set(cacheKey, remote);
         setWarehouseOptions(q ? remote : filterWarehouseOptions(remote, q));
       } catch {
-        // keep previous options on failure (rate limit, network)
+        /* keep previous options */
       } finally {
         if (!controller.signal.aborted) setWarehouseLoading(false);
       }
     }, 250);
-
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
   }, [cityRef, deliveryMethod, locale, warehouse]);
 
+  function getStepSummary(step: 1 | 2 | 3) {
+    if (typeof window === "undefined") return "";
+    const fd = new FormData(formRef.current!);
+    if (step === 1) {
+      const n = String(fd.get("name") || "").trim();
+      const s = String(fd.get("surname") || "").trim();
+      const p = String(fd.get("phone") || "").trim();
+      const e = String(fd.get("email") || "").trim();
+      return [n && s ? `${n} ${s}` : "", p, e].filter(Boolean).join(" · ");
+    }
+    if (step === 2) {
+      const methodLabel = deliveryMethod === "nova_poshta_locker" ? sc("lockerLabel") : sc("branchLabel");
+      return city ? `${methodLabel}, ${city}${warehouse ? `, ${warehouse}` : ""}` : "";
+    }
+    if (step === 3) {
+      const pm = String(fd.get("paymentMethod") || "cod");
+      return pm === "online" ? sc("onlineLabel") : sc("codLabel");
+    }
+    return "";
+  }
+
+  function renderStepHeader(step: 1 | 2 | 3 | 4, stepKey: "step1" | "step2" | "step3" | "step4", Icon: typeof User) {
+    const isActive = activeStep === step;
+    const isCompleted = activeStep > step;
+    const summary = !isActive && isCompleted && step <= 3 ? getStepSummary(step as 1 | 2 | 3) : "";
+    return (
+      <div
+        className={`flex items-center justify-between rounded-t-lg px-5 py-4 ${
+          isActive ? "bg-white" : "cursor-pointer bg-mist/50 hover:bg-mist"
+        }`}
+        onClick={() => {
+          if (!isActive && isCompleted) setActiveStep(step);
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+              isCompleted ? "bg-emerald-500 text-white" : isActive ? "bg-ink text-white" : "bg-black/10 text-graphite/50"
+            }`}
+          >
+            {isCompleted ? <Check size={14} /> : step}
+          </span>
+          <div>
+            <span className={`text-sm font-semibold ${isActive ? "" : "text-graphite/70"}`}>{sc(stepKey)}</span>
+            {summary && <p className="mt-0.5 text-xs text-graphite/50 line-clamp-1">{summary}</p>}
+          </div>
+        </div>
+        {isCompleted && !isActive && (
+          <button type="button" className="flex items-center gap-1 text-xs font-medium text-graphite/50 hover:text-ink">
+            <Pencil size={13} />
+            {sc("edit")}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <form
       ref={formRef}
       noValidate
-      className="mt-8 grid gap-5"
+      className="mt-8"
       onSubmit={async (e) => {
         e.preventDefault();
         if (submitting) return;
         setGeneralError("");
         setFieldErrors({});
         const fd = new FormData(e.currentTarget);
-        const clientErrors = validate(fd, noContact);
+        const clientErrors = validateAll(fd);
         if (Object.keys(clientErrors).length) {
           setFieldErrors(clientErrors);
           focusFirstError(clientErrors);
@@ -412,7 +521,6 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
           setGeneralError(copy.invalid.turnstile || copy.server);
           return;
         }
-
         setSubmitting(true);
         let keepButtonLocked = false;
         try {
@@ -463,313 +571,375 @@ export function CheckoutForm({ locale = "uk" }: { locale?: string }) {
         }
       }}
     >
-      <section className="rounded-lg border border-black/10 bg-white p-5 shadow-card">
-        <div className="mb-4 flex items-center gap-2 font-semibold">
-          <User size={18} />
-          {copy.contacts}
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <input name="name" placeholder={t("name")} aria-invalid={Boolean(fieldErrors.name)} className={`${field} w-full`} />
-            {errorFor("name")}
-          </div>
-          <div>
-            <input name="surname" placeholder={t("surname")} aria-invalid={Boolean(fieldErrors.surname)} className={`${field} w-full`} />
-            {errorFor("surname")}
-          </div>
-          <div>
-            <input name="patronymic" placeholder={t("patronymic")} aria-invalid={Boolean(fieldErrors.patronymic)} className={`${field} w-full`} />
-            {errorFor("patronymic")}
-          </div>
-          <div className="sm:col-span-3">
-            <input
-              name="phone"
-              type="tel"
-              placeholder="+380 (__) ___-__-__"
-              value={phone}
-              onChange={(event) => setPhone(formatPhoneMask(event.target.value))}
-              onFocus={() => {
-                if (!phone) setPhone("+380 (");
-              }}
-              maxLength={19}
-              autoComplete="tel"
-              aria-invalid={Boolean(fieldErrors.phone)}
-              className={`${field} w-full`}
-            />
-            {errorFor("phone")}
-          </div>
-          <div className="sm:col-span-3">
-            <input name="email" type="email" placeholder={t("email")} aria-invalid={Boolean(fieldErrors.email)} className={`${field} w-full`} />
-            {errorFor("email")}
-          </div>
-<div className="sm:col-span-2">
-            <div className="mb-1 text-xs font-medium">
-              {noContact ? <span className="text-graphite/50">{copy.telegram} ({copy.optional})</span> : <span className="text-red-600">{copy.telegram} *</span>}
-            </div>
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <div className="relative">
-                <MessageCircle className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-graphite/40" size={17} />
-                <input
-                  name="telegram"
-                  placeholder={noContact ? `${copy.telegram} — ${copy.optional}` : copy.telegram}
-                  disabled={noContact}
-                  aria-invalid={Boolean(fieldErrors.telegram)}
-                  className={`${field} w-full pl-11 ${noContact ? "bg-mist/60 opacity-60" : ""}`}
-                />
+      <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
+        {/* Step 1: Personal Data */}
+        {renderStepHeader(1, "step1", User)}
+        {activeStep === 1 && (
+          <div className="border-t border-black/10 px-5 py-5">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <input name="name" placeholder={t("name")} aria-invalid={Boolean(fieldErrors.name)} className={`${field} w-full`} />
+                {errorFor("name")}
               </div>
-              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-graphite/60">
+              <div>
+                <input name="surname" placeholder={t("surname")} aria-invalid={Boolean(fieldErrors.surname)} className={`${field} w-full`} />
+                {errorFor("surname")}
+              </div>
+              <div>
+                <input name="patronymic" placeholder={t("patronymic")} aria-invalid={Boolean(fieldErrors.patronymic)} className={`${field} w-full`} />
+                {errorFor("patronymic")}
+              </div>
+              <div className="sm:col-span-3">
                 <input
-                  type="checkbox"
-                  name="noContact"
-                  className="h-4 w-4 accent-black"
-                  checked={noContact}
-                  onChange={(event) => {
-                    setNoContact(event.target.checked);
-                    setFieldErrors((current) => {
-                      const next = { ...current };
-                      delete next.telegram;
-                      return next;
-                    });
-                  }}
+                  name="phone"
+                  type="tel"
+                  placeholder="+380 (__) ___-__-__"
+                  value={phone}
+                  onChange={(event) => setPhone(formatPhoneMask(event.target.value))}
+                  onFocus={() => { if (!phone) setPhone("+380 ("); }}
+                  maxLength={19}
+                  autoComplete="tel"
+                  aria-invalid={Boolean(fieldErrors.phone)}
+                  className={`${field} w-full`}
                 />
-                {copy.noTelegramContact}
-              </label>
+                {errorFor("phone")}
+              </div>
+              <div className="sm:col-span-3">
+                <input name="email" type="email" placeholder={t("email")} aria-invalid={Boolean(fieldErrors.email)} className={`${field} w-full`} />
+                {errorFor("email")}
+              </div>
+              <div className="sm:col-span-2">
+                <div className="mb-1 text-xs font-medium">
+                  {noContact ? <span className="text-graphite/50">{copy.telegram} ({copy.optional})</span> : <span className="text-red-600">{copy.telegram} *</span>}
+                </div>
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <div className="relative">
+                    <MessageCircle className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-graphite/40" size={17} />
+                    <input
+                      name="telegram"
+                      placeholder={noContact ? `${copy.telegram} — ${copy.optional}` : copy.telegram}
+                      disabled={noContact}
+                      aria-invalid={Boolean(fieldErrors.telegram)}
+                      className={`${field} w-full pl-11 ${noContact ? "bg-mist/60 opacity-60" : ""}`}
+                    />
+                  </div>
+                  <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-graphite/60">
+                    <input
+                      type="checkbox"
+                      name="noContact"
+                      className="h-4 w-4 accent-black"
+                      checked={noContact}
+                      onChange={(event) => {
+                        setNoContact(event.target.checked);
+                        setFieldErrors((current) => { const next = { ...current }; delete next.telegram; return next; });
+                      }}
+                    />
+                    {copy.noTelegramContact}
+                  </label>
+                </div>
+                {errorFor("telegram")}
+              </div>
             </div>
-            {errorFor("telegram")}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-black/10 bg-white p-5 shadow-card">
-        <div className="mb-4 flex items-center gap-2 font-semibold">
-          <Truck size={18} />
-          {copy.shipping}
-        </div>
-        <div className="grid gap-3">
-          <div>
-            <div className="mb-2 text-xs font-medium text-graphite/55">{copy.deliveryType}</div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDeliveryMethod("nova_poshta_branch");
-                  setWarehouse("");
-                  setWarehouseRef("");
-                  setFieldErrors((current) => {
-                    const next = { ...current };
-                    delete next.warehouse;
-                    return next;
-                  });
-                }}
-                aria-pressed={deliveryMethod === "nova_poshta_branch"}
-                className={`flex h-11 items-center justify-center gap-2 rounded-lg border text-sm font-medium transition ${
-                  deliveryMethod === "nova_poshta_branch"
-                    ? "border-ink bg-ink text-white"
-                    : "border-black/10 bg-white text-graphite/70 hover:border-ink"
-                }`}
-              >
-                <Building2 size={16} />
-                {copy.branch}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setDeliveryMethod("nova_poshta_locker");
-                  setWarehouse("");
-                  setWarehouseRef("");
-                  setFieldErrors((current) => {
-                    const next = { ...current };
-                    delete next.warehouse;
-                    return next;
-                  });
-                }}
-                aria-pressed={deliveryMethod === "nova_poshta_locker"}
-                className={`flex h-11 items-center justify-center gap-2 rounded-lg border text-sm font-medium transition ${
-                  deliveryMethod === "nova_poshta_locker"
-                    ? "border-ink bg-ink text-white"
-                    : "border-black/10 bg-white text-graphite/70 hover:border-ink"
-                }`}
-              >
-                <Package size={16} />
-                {copy.locker}
+            <div className="mt-4 flex justify-end">
+              <button type="button" onClick={() => handleContinue(1)} className="rounded-lg bg-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-ink/90">
+                {sc("continue")}
               </button>
             </div>
-            <input type="hidden" name="deliveryMethod" value={deliveryMethod} />
           </div>
-          <div>
-            <div className="relative">
-              <MapPin className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-graphite/40" size={17} />
-              <input
-                name="city"
-                value={city}
-                onChange={(event) => {
-                  setCity(event.target.value);
-                  setCityRef("");
-                  setShowCityOptions(true);
-                }}
-                onFocus={() => setShowCityOptions(true)}
-                onBlur={() => {
-                  window.setTimeout(() => setShowCityOptions(false), 120);
-                  if (!cityRef && city.trim()) {
-                    const match = cityOptions.find((o) => o.ref && normalizeCity(o.name) === normalizeCity(city));
-                    if (match) selectCity(match);
-                  }
-                }}
-                placeholder={t("city")}
-                aria-invalid={Boolean(fieldErrors.city)}
-                aria-expanded={showCityOptions && cityOptions.length > 0}
-                aria-controls="checkout-city-list"
-                role="combobox"
-                autoComplete="off"
-                className={`${field} w-full pl-11`}
-              />
-              <input type="hidden" name="cityRef" value={cityRef} />
-              {showCityOptions && cityOptions.length > 0 && (
-                <div
-                  id="checkout-city-list"
-                  role="listbox"
-                  className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 max-h-64 overflow-auto rounded-lg border border-black/10 bg-white py-2 text-sm shadow-card"
-                >
-                  {cityOptions.map((option) => (
-                    <button
-                      key={`${option.name}-${option.ref || option.area || "local"}`}
-                      type="button"
-                      role="option"
-                      aria-selected={city === option.name}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => selectCity(option)}
-                      className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left hover:bg-mist"
-                    >
-                      <span className="font-medium">{option.name}</span>
-                      {option.area && <span className="text-xs text-graphite/50">{option.area}</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {errorFor("city")}
-          </div>
-          <div>
-            <div className="relative">
-              <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
-                {warehouseLoading ? (
-                  <LoaderCircle size={17} className="animate-spin text-graphite/40" />
-                ) : (
-                  deliveryMethod === "nova_poshta_locker" ? (
-                    <Package size={17} className="text-graphite/40" />
-                  ) : (
-                    <Building2 size={17} className="text-graphite/40" />
-                  )
-                )}
-              </div>
-              <input
-                name="warehouse"
-                ref={warehouseInputRef}
-                value={warehouse}
-                onChange={(event) => {
-                  setWarehouse(event.target.value);
-                  setWarehouseRef("");
-                  setShowWarehouseOptions(true);
-                }}
-                onFocus={() => {
-                  if (cityRef) setShowWarehouseOptions(true);
-                }}
-                onBlur={() => window.setTimeout(() => setShowWarehouseOptions(false), 150)}
-                placeholder={t("warehouse")}
-                aria-invalid={Boolean(fieldErrors.warehouse)}
-                aria-expanded={showWarehouseOptions && warehouseOptions.length > 0}
-                aria-controls="checkout-warehouse-list"
-                role="combobox"
-                autoComplete="off"
-                className={`${field} w-full pl-11`}
-              />
-              <input type="hidden" name="warehouseRef" value={warehouseRef} />
-              {showWarehouseOptions && warehouseOptions.length > 0 && (
-                <div
-                  id="checkout-warehouse-list"
-                  role="listbox"
-                  className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 max-h-64 overflow-auto rounded-lg border border-black/10 bg-white py-2 text-sm shadow-card"
-                >
-                  {warehouseOptions.map((option) => (
-                    <button
-                      key={`${option.ref || option.name}-${option.category || "wh"}`}
-                      type="button"
-                      role="option"
-                      aria-selected={warehouse === option.name}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => selectWarehouse(option)}
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-mist"
-                    >
-                      <span className="shrink-0 text-graphite/40">
-                        {deliveryMethod === "nova_poshta_locker" ? <Package size={15} /> : <Building2 size={15} />}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate font-medium">{option.number ? `№${option.number}` : ""} {option.name}</span>
-                        {option.address && <span className="block truncate text-xs text-graphite/50">{option.address}</span>}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {!cityRef && (
-              <p className="mt-1 text-xs text-graphite/50">{copy.selectCityFirst}</p>
-            )}
-            {cityRef && warehouseLoading && warehouseOptions.length === 0 && !warehouse && (
-              <p className="mt-1 text-xs text-graphite/50">{copy.warehouseLoading}</p>
-            )}
-            {cityRef && showWarehouseOptions && warehouseOptions.length === 0 && !warehouseLoading && (
-              <p className="mt-1 text-xs text-graphite/50">{copy.noWarehouses}</p>
-            )}
-            {errorFor("warehouse")}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-black/10 bg-white p-5 shadow-card">
-        <div className="mb-4 flex items-center gap-2 font-semibold">
-          <CreditCard size={18} />
-          {copy.payment}
-        </div>
-        <div className="grid gap-3">
-          <select name="paymentMethod" className={field}>
-            <option value="cod">{t("cod")}</option>
-            <option value="online">{t("online")}</option>
-          </select>
-          <div className="relative">
-            <MessageSquare className="pointer-events-none absolute left-4 top-4 text-graphite/40" size={17} />
-            <textarea name="comment" placeholder={t("comment")} className="min-h-28 rounded-lg border border-black/10 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:border-ink" />
-          </div>
-        </div>
-      </section>
-
-      <div>
-        <label className="flex items-start gap-2 text-sm text-graphite/70">
-          <input type="checkbox" name="agree" className="mt-1 accent-black" />
-          {t("agree")}
-        </label>
-        {errorFor("agree")}
+        )}
       </div>
-      {honeypotField()}
-      {turnstileRequired && (
-        <div>
-          <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTurnstileToken} />
-          {!turnstileToken && generalError && (
-            <p className="mt-1 text-xs text-red-600">{copy.invalid.turnstile}</p>
-          )}
-        </div>
-      )}
-      {generalError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{generalError}</p>}
-      <button
-        type="submit"
-        disabled={submitting}
-        className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-semibold text-white transition ${
-          submitting ? "cursor-wait bg-graphite/35" : "bg-accent hover:bg-accentHover"
-        }`}
-      >
-        {submitting && <LoaderCircle size={18} className="animate-spin" />}
-        {t("submit")}
-      </button>
+
+      {/* Step 2: Delivery */}
+      <div className="mt-3 overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
+        {renderStepHeader(2, "step2", Truck)}
+        {activeStep === 2 && (
+          <div className="border-t border-black/10 px-5 py-5">
+            <div className="grid gap-3">
+              <div>
+                <div className="mb-2 text-xs font-medium text-graphite/55">{copy.deliveryType}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setDeliveryMethod("nova_poshta_branch"); setWarehouse(""); setWarehouseRef(""); setFieldErrors((c) => { const n = { ...c }; delete n.warehouse; return n; }); }}
+                    aria-pressed={deliveryMethod === "nova_poshta_branch"}
+                    className={`flex h-11 items-center justify-center gap-2 rounded-lg border text-sm font-medium transition ${
+                      deliveryMethod === "nova_poshta_branch" ? "border-ink bg-ink text-white" : "border-black/10 bg-white text-graphite/70 hover:border-ink"
+                    }`}
+                  >
+                    <Building2 size={16} />
+                    {copy.branch}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDeliveryMethod("nova_poshta_locker"); setWarehouse(""); setWarehouseRef(""); setFieldErrors((c) => { const n = { ...c }; delete n.warehouse; return n; }); }}
+                    aria-pressed={deliveryMethod === "nova_poshta_locker"}
+                    className={`flex h-11 items-center justify-center gap-2 rounded-lg border text-sm font-medium transition ${
+                      deliveryMethod === "nova_poshta_locker" ? "border-ink bg-ink text-white" : "border-black/10 bg-white text-graphite/70 hover:border-ink"
+                    }`}
+                  >
+                    <Package size={16} />
+                    {copy.locker}
+                  </button>
+                </div>
+                <input type="hidden" name="deliveryMethod" value={deliveryMethod} />
+              </div>
+              <div>
+                <div className="relative">
+                  <MapPin className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-graphite/40" size={17} />
+                  <input
+                    name="city"
+                    value={city}
+                    onChange={(event) => { setCity(event.target.value); setCityRef(""); setShowCityOptions(true); }}
+                    onFocus={() => setShowCityOptions(true)}
+                    onBlur={() => {
+                      window.setTimeout(() => setShowCityOptions(false), 120);
+                      if (!cityRef && city.trim()) {
+                        const match = cityOptions.find((o) => o.ref && normalizeCity(o.name) === normalizeCity(city));
+                        if (match) selectCity(match);
+                      }
+                    }}
+                    placeholder={t("city")}
+                    aria-invalid={Boolean(fieldErrors.city)}
+                    aria-expanded={showCityOptions && cityOptions.length > 0}
+                    aria-controls="checkout-city-list"
+                    role="combobox"
+                    autoComplete="off"
+                    className={`${field} w-full pl-11`}
+                  />
+                  <input type="hidden" name="cityRef" value={cityRef} />
+                  {showCityOptions && cityOptions.length > 0 && (
+                    <div id="checkout-city-list" role="listbox" className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 max-h-64 overflow-auto rounded-lg border border-black/10 bg-white py-2 text-sm shadow-card">
+                      {cityOptions.map((option) => (
+                        <button
+                          key={`${option.name}-${option.ref || option.area || "local"}`}
+                          type="button" role="option" aria-selected={city === option.name}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => selectCity(option)}
+                          className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left hover:bg-mist"
+                        >
+                          <span className="font-medium">{option.name}</span>
+                          {option.area && <span className="text-xs text-graphite/50">{option.area}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {errorFor("city")}
+              </div>
+              <div>
+                <div className="relative">
+                  <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
+                    {warehouseLoading ? (
+                      <LoaderCircle size={17} className="animate-spin text-graphite/40" />
+                    ) : deliveryMethod === "nova_poshta_locker" ? (
+                      <Package size={17} className="text-graphite/40" />
+                    ) : (
+                      <Building2 size={17} className="text-graphite/40" />
+                    )}
+                  </div>
+                  <input
+                    name="warehouse" ref={warehouseInputRef} value={warehouse}
+                    onChange={(event) => { setWarehouse(event.target.value); setWarehouseRef(""); setShowWarehouseOptions(true); }}
+                    onFocus={() => { if (cityRef) setShowWarehouseOptions(true); }}
+                    onBlur={() => window.setTimeout(() => setShowWarehouseOptions(false), 150)}
+                    placeholder={t("warehouse")}
+                    aria-invalid={Boolean(fieldErrors.warehouse)}
+                    aria-expanded={showWarehouseOptions && warehouseOptions.length > 0}
+                    aria-controls="checkout-warehouse-list"
+                    role="combobox" autoComplete="off"
+                    className={`${field} w-full pl-11`}
+                  />
+                  <input type="hidden" name="warehouseRef" value={warehouseRef} />
+                  {showWarehouseOptions && warehouseOptions.length > 0 && (
+                    <div id="checkout-warehouse-list" role="listbox" className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 max-h-64 overflow-auto rounded-lg border border-black/10 bg-white py-2 text-sm shadow-card">
+                      {warehouseOptions.map((option) => (
+                        <button
+                          key={`${option.ref || option.name}-${option.category || "wh"}`}
+                          type="button" role="option" aria-selected={warehouse === option.name}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => selectWarehouse(option)}
+                          className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-mist"
+                        >
+                          <span className="shrink-0 text-graphite/40">
+                            {deliveryMethod === "nova_poshta_locker" ? <Package size={15} /> : <Building2 size={15} />}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium">{option.number ? `№${option.number}` : ""} {option.name}</span>
+                            {option.address && <span className="block truncate text-xs text-graphite/50">{option.address}</span>}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {!cityRef && <p className="mt-1 text-xs text-graphite/50">{copy.selectCityFirst}</p>}
+                {cityRef && warehouseLoading && warehouseOptions.length === 0 && !warehouse && <p className="mt-1 text-xs text-graphite/50">{copy.warehouseLoading}</p>}
+                {cityRef && showWarehouseOptions && warehouseOptions.length === 0 && !warehouseLoading && <p className="mt-1 text-xs text-graphite/50">{copy.noWarehouses}</p>}
+                {errorFor("warehouse")}
+              </div>
+            </div>
+            <div className="mt-4 flex justify-between">
+              <button type="button" onClick={() => setActiveStep(1)} className="rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-graphite/70 hover:bg-mist">
+                {t("name").replace(/.*/, sc("step1"))}
+              </button>
+              <button type="button" onClick={() => handleContinue(2)} className="rounded-lg bg-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-ink/90">
+                {sc("continue")}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Step 3: Payment */}
+      <div className="mt-3 overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
+        {renderStepHeader(3, "step3", CreditCard)}
+        {activeStep === 3 && (
+          <div className="border-t border-black/10 px-5 py-5">
+            <div className="grid gap-3">
+              <select name="paymentMethod" className={field}>
+                <option value="cod">{sc("codLabel")}</option>
+                <option value="online">{sc("onlineLabel")}</option>
+              </select>
+              <div className="relative">
+                <MessageSquare className="pointer-events-none absolute left-4 top-4 text-graphite/40" size={17} />
+                <textarea name="comment" placeholder={t("comment")} className="min-h-28 rounded-lg border border-black/10 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:border-ink" />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-between">
+              <button type="button" onClick={() => setActiveStep(2)} className="rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-graphite/70 hover:bg-mist">
+                {sc("step2")}
+              </button>
+              <button type="button" onClick={() => handleContinue(3)} className="rounded-lg bg-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-ink/90">
+                {sc("continue")}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Step 4: Confirmation */}
+      <div className="mt-3 overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
+        {renderStepHeader(4, "step4", Check)}
+        {activeStep === 4 && (
+          <div className="border-t border-black/10 px-5 py-5">
+            {/* Review sections */}
+            <div className="mb-5 grid gap-4 rounded-lg bg-mist/50 p-4 text-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-xs font-medium text-graphite/50">{sc("step1")}</div>
+                  <div className="mt-1 font-medium">{getStepSummary(1) || "—"}</div>
+                </div>
+                <button type="button" onClick={() => setActiveStep(1)} className="flex items-center gap-1 text-xs font-medium text-graphite/50 hover:text-ink">
+                  <Pencil size={12} /> {sc("edit")}
+                </button>
+              </div>
+              <div className="border-t border-black/5" />
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-xs font-medium text-graphite/50">{sc("step2")}</div>
+                  <div className="mt-1 font-medium">{getStepSummary(2) || "—"}</div>
+                </div>
+                <button type="button" onClick={() => setActiveStep(2)} className="flex items-center gap-1 text-xs font-medium text-graphite/50 hover:text-ink">
+                  <Pencil size={12} /> {sc("edit")}
+                </button>
+              </div>
+              <div className="border-t border-black/5" />
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-xs font-medium text-graphite/50">{sc("step3")}</div>
+                  <div className="mt-1 font-medium">{getStepSummary(3) || "—"}</div>
+                </div>
+                <button type="button" onClick={() => setActiveStep(3)} className="flex items-center gap-1 text-xs font-medium text-graphite/50 hover:text-ink">
+                  <Pencil size={12} /> {sc("edit")}
+                </button>
+              </div>
+            </div>
+
+            {/* Order items */}
+            <h3 className="mb-3 text-sm font-semibold">{ss("orderSummary")}</h3>
+            <div className="mb-5 grid gap-3">
+              {cartItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-4 rounded-lg bg-mist p-3">
+                  <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white">
+                    {item.image ? (
+                      <Image src={item.image} alt="" fill sizes="64px" className="object-contain p-1.5" />
+                    ) : (
+                      <span className="absolute inset-0 grid place-items-center text-[10px] font-semibold text-graphite/35">Locko</span>
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block line-clamp-2 text-sm font-medium leading-snug">{item.name}</span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-sm font-semibold">{formatPrice(item.unitPrice, locale)}</span>
+                      {item.oldPrice && item.oldPrice > item.unitPrice && (
+                        <span className="text-xs text-graphite/40 line-through">{formatPrice(item.oldPrice, locale)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-sm font-semibold">{formatPrice(item.total, locale)}</span>
+                    <span className="text-xs text-graphite/50">{item.qty} {ss("packs").toLowerCase()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary totals */}
+            <div className="rounded-lg border border-black/10 p-4 text-sm">
+              <div className="flex justify-between py-1">
+                <span className="text-graphite/60">{ss("subtotal")}</span>
+                <span className="font-medium">{formatPrice(subtotal, locale)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between py-1">
+                  <span className="text-emerald-600">{ss("discount")}</span>
+                  <span className="font-medium text-emerald-600">-{formatPrice(discount, locale)}</span>
+                </div>
+              )}
+              <div className="flex justify-between py-1">
+                <span className="text-graphite/60">{ss("shippingCost")}</span>
+                <span className="text-xs text-graphite/50">{ss("shippingNote")}</span>
+              </div>
+              <div className="mt-2 flex justify-between border-t border-black/10 pt-2">
+                <span className="font-semibold">{ss("total")}</span>
+                <span className="text-lg font-semibold">{formatPrice(total, locale)}</span>
+              </div>
+            </div>
+
+            {/* Agree + submit */}
+            <div className="mt-5">
+              <label className="flex items-start gap-2 text-sm text-graphite/70">
+                <input type="checkbox" name="agree" className="mt-1 accent-black" />
+                {t("agree")}
+              </label>
+              {errorFor("agree")}
+            </div>
+            {honeypotField()}
+            {turnstileRequired && (
+              <div className="mt-3">
+                <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={setTurnstileToken} />
+                {!turnstileToken && generalError && <p className="mt-1 text-xs text-red-600">{copy.invalid.turnstile}</p>}
+              </div>
+            )}
+            {generalError && <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{generalError}</p>}
+            <div className="mt-5 flex justify-between">
+              <button type="button" onClick={() => setActiveStep(3)} className="rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-graphite/70 hover:bg-mist">
+                {sc("step3")}
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-white transition ${
+                  submitting ? "cursor-wait bg-graphite/35" : "bg-accent hover:bg-accentHover"
+                }`}
+              >
+                {submitting && <LoaderCircle size={18} className="animate-spin" />}
+                {sc("placeOrder")}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </form>
   );
 }
