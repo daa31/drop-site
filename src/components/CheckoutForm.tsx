@@ -239,6 +239,15 @@ export function CheckoutForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4>(1);
+
+  const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
+  const [patronymic, setPatronymic] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [telegram, setTelegram] = useState("");
+  const [noContact, setNoContact] = useState(false);
+
   const [city, setCity] = useState("");
   const [cityRef, setCityRef] = useState("");
   const [cityOptions, setCityOptions] = useState<CityOption[]>(() => fallbackCities(locale, ""));
@@ -249,10 +258,13 @@ export function CheckoutForm({
   const [warehouseOptions, setWarehouseOptions] = useState<WarehouseOption[]>([]);
   const [showWarehouseOptions, setShowWarehouseOptions] = useState(false);
   const [warehouseLoading, setWarehouseLoading] = useState(false);
-  const [noContact, setNoContact] = useState(false);
+
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [comment, setComment] = useState("");
+  const [agree, setAgree] = useState(false);
+
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRequired = TURNSTILE_SITE_KEY.length > 0;
-  const [phone, setPhone] = useState("");
   const copy = localCopy(locale);
   const sc = (key: keyof typeof CHECKOUT_STEP_COPY) => tr(CHECKOUT_STEP_COPY[key], locale);
   const ss = (key: keyof typeof CHECKOUT_SUMMARY_COPY) => tr(CHECKOUT_SUMMARY_COPY[key], locale);
@@ -261,40 +273,28 @@ export function CheckoutForm({
     "h-12 rounded-lg border border-black/10 bg-white px-4 text-sm outline-none focus:border-ink aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50";
   const errorClass = "mt-1 text-xs font-medium text-red-700";
 
-  const nameValue = typeof window !== "undefined" ? (formRef.current?.elements.namedItem("name") as HTMLInputElement)?.value || "" : "";
-  const surnameValue = typeof window !== "undefined" ? (formRef.current?.elements.namedItem("surname") as HTMLInputElement)?.value || "" : "";
-
-  function validateStep1(fd: FormData): FieldErrors {
+  function validateStep1(): FieldErrors {
     const next: FieldErrors = {};
-    const name = String(fd.get("name") || "").trim();
-    const surname = String(fd.get("surname") || "").trim();
-    const patronymic = String(fd.get("patronymic") || "").trim();
-    const phoneVal = String(fd.get("phone") || "").trim();
-    const email = String(fd.get("email") || "").trim();
-    const telegram = String(fd.get("telegram") || "").trim();
-    if (name.length < 2) next.name = copy.invalid.name;
-    if (!surname) next.surname = copy.invalid.surname;
-    if (!patronymic) next.patronymic = copy.invalid.patronymic;
-    if (phoneVal.replace(/\D/g, "").length < 10) next.phone = copy.invalid.phone;
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = copy.invalid.email;
-    if (!noContact && !telegram) next.telegram = copy.invalid.telegram;
+    if (name.trim().length < 2) next.name = copy.invalid.name;
+    if (!surname.trim()) next.surname = copy.invalid.surname;
+    if (!patronymic.trim()) next.patronymic = copy.invalid.patronymic;
+    if (phone.replace(/\D/g, "").length < 10) next.phone = copy.invalid.phone;
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = copy.invalid.email;
+    if (!noContact && !telegram.trim()) next.telegram = copy.invalid.telegram;
     return next;
   }
 
-  function validateStep2(fd: FormData): FieldErrors {
+  function validateStep2(): FieldErrors {
     const next: FieldErrors = {};
-    const cityVal = String(fd.get("city") || "").trim();
-    const warehouseVal = String(fd.get("warehouse") || "").trim();
-    if (cityVal.length < 2) next.city = copy.invalid.city;
-    if (!warehouseVal) next.warehouse = copy.invalid.warehouse;
+    if (city.trim().length < 2) next.city = copy.invalid.city;
+    if (!warehouse.trim()) next.warehouse = copy.invalid.warehouse;
     return next;
   }
 
-  function validateAll(fd: FormData): FieldErrors {
+  function validateAll(): FieldErrors {
     const next: FieldErrors = {};
-    Object.assign(next, validateStep1(fd));
-    Object.assign(next, validateStep2(fd));
-    const agree = fd.get("agree") === "on";
+    Object.assign(next, validateStep1());
+    Object.assign(next, validateStep2());
     if (!agree) next.agree = copy.invalid.agree;
     return next;
   }
@@ -306,8 +306,8 @@ export function CheckoutForm({
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function errorFor(name: FieldName) {
-    return fieldErrors[name] ? <p className={errorClass}>{fieldErrors[name]}</p> : null;
+  function errorFor(fieldName: FieldName) {
+    return fieldErrors[fieldName] ? <p className={errorClass}>{fieldErrors[fieldName]}</p> : null;
   }
 
   function selectCity(option: CityOption) {
@@ -335,21 +335,6 @@ export function CheckoutForm({
       delete next.warehouse;
       return next;
     });
-  }
-
-  function handleContinue(currentStep: 1 | 2 | 3) {
-    const fd = new FormData(formRef.current!);
-    let errors: FieldErrors = {};
-    if (currentStep === 1) errors = validateStep1(fd);
-    else if (currentStep === 2) errors = validateStep2(fd);
-    if (Object.keys(errors).length) {
-      setFieldErrors(errors);
-      focusFirstError(errors);
-      return;
-    }
-    setFieldErrors({});
-    setActiveStep((currentStep + 1) as 1 | 2 | 3 | 4);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   useEffect(() => {
@@ -443,31 +428,25 @@ export function CheckoutForm({
     };
   }, [cityRef, deliveryMethod, locale, warehouse]);
 
-  function getStepSummary(step: 1 | 2 | 3) {
-    if (typeof window === "undefined") return "";
-    const fd = new FormData(formRef.current!);
+  function getStepSummary(step: 1 | 2 | 3): string {
     if (step === 1) {
-      const n = String(fd.get("name") || "").trim();
-      const s = String(fd.get("surname") || "").trim();
-      const p = String(fd.get("phone") || "").trim();
-      const e = String(fd.get("email") || "").trim();
-      return [n && s ? `${n} ${s}` : "", p, e].filter(Boolean).join(" · ");
+      const fullName = [name.trim(), surname.trim()].filter(Boolean).join(" ");
+      return [fullName || "", phone.trim(), email.trim()].filter(Boolean).join(" · ");
     }
     if (step === 2) {
       const methodLabel = deliveryMethod === "nova_poshta_locker" ? sc("lockerLabel") : sc("branchLabel");
-      return city ? `${methodLabel}, ${city}${warehouse ? `, ${warehouse}` : ""}` : "";
+      return city.trim() ? `${methodLabel}, ${city}${warehouse ? `, ${warehouse}` : ""}` : "";
     }
     if (step === 3) {
-      const pm = String(fd.get("paymentMethod") || "cod");
-      return pm === "online" ? sc("onlineLabel") : sc("codLabel");
+      return paymentMethod === "online" ? sc("onlineLabel") : sc("codLabel");
     }
     return "";
   }
 
-  function renderStepHeader(step: 1 | 2 | 3 | 4, stepKey: "step1" | "step2" | "step3" | "step4", Icon: typeof User) {
+  function renderStepHeader(step: 1 | 2 | 3 | 4, stepKey: "step1" | "step2" | "step3" | "step4") {
     const isActive = activeStep === step;
     const isCompleted = activeStep > step;
-    const summary = !isActive && isCompleted && step <= 3 ? getStepSummary(step as 1 | 2 | 3) : "";
+    const summary = !isActive && isCompleted && (step === 1 || step === 2 || step === 3) ? getStepSummary(step) : "";
     return (
       <div
         className={`flex items-center justify-between rounded-t-lg px-5 py-4 ${
@@ -500,6 +479,21 @@ export function CheckoutForm({
     );
   }
 
+  function handleContinue(currentStep: 1 | 2 | 3) {
+    let errors: FieldErrors = {};
+    if (currentStep === 1) errors = validateStep1();
+    else if (currentStep === 2) errors = validateStep2();
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      focusFirstError(errors);
+      return;
+    }
+    setFieldErrors({});
+    const next = (currentStep + 1) as 1 | 2 | 3 | 4;
+    setActiveStep(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <form
       ref={formRef}
@@ -510,8 +504,7 @@ export function CheckoutForm({
         if (submitting) return;
         setGeneralError("");
         setFieldErrors({});
-        const fd = new FormData(e.currentTarget);
-        const clientErrors = validateAll(fd);
+        const clientErrors = validateAll();
         if (Object.keys(clientErrors).length) {
           setFieldErrors(clientErrors);
           focusFirstError(clientErrors);
@@ -528,23 +521,23 @@ export function CheckoutForm({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              name: fd.get("name"),
-              surname: fd.get("surname"),
-              patronymic: fd.get("patronymic"),
-              phone: fd.get("phone"),
-              email: fd.get("email"),
-              city: fd.get("city"),
-              deliveryMethod: fd.get("deliveryMethod"),
-              cityRef: fd.get("cityRef"),
-              warehouse: fd.get("warehouse"),
-              warehouseRef: fd.get("warehouseRef"),
-              telegram: fd.get("telegram") || "",
+              name: name.trim(),
+              surname: surname.trim(),
+              patronymic: patronymic.trim(),
+              phone: phone.trim(),
+              email: email.trim(),
+              city: city.trim(),
+              deliveryMethod,
+              cityRef,
+              warehouse: warehouse.trim(),
+              warehouseRef,
+              telegram: telegram.trim(),
               noContact,
-              paymentMethod: fd.get("paymentMethod"),
-              comment: fd.get("comment"),
+              paymentMethod,
+              comment: comment.trim(),
               locale,
-              agree: fd.get("agree") === "on",
-              [HONEYPOT_NAME]: fd.get(HONEYPOT_NAME) || "",
+              agree,
+              [HONEYPOT_NAME]: "",
               turnstileToken,
             }),
           });
@@ -571,41 +564,39 @@ export function CheckoutForm({
         }
       }}
     >
+      {/* Step 1: Personal Data */}
       <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
-        {/* Step 1: Personal Data */}
-        {renderStepHeader(1, "step1", User)}
+        {renderStepHeader(1, "step1")}
         {activeStep === 1 && (
           <div className="border-t border-black/10 px-5 py-5">
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <input name="name" placeholder={t("name")} aria-invalid={Boolean(fieldErrors.name)} className={`${field} w-full`} />
+                <input name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("name")} aria-invalid={Boolean(fieldErrors.name)} className={`${field} w-full`} />
                 {errorFor("name")}
               </div>
               <div>
-                <input name="surname" placeholder={t("surname")} aria-invalid={Boolean(fieldErrors.surname)} className={`${field} w-full`} />
+                <input name="surname" value={surname} onChange={(e) => setSurname(e.target.value)} placeholder={t("surname")} aria-invalid={Boolean(fieldErrors.surname)} className={`${field} w-full`} />
                 {errorFor("surname")}
               </div>
               <div>
-                <input name="patronymic" placeholder={t("patronymic")} aria-invalid={Boolean(fieldErrors.patronymic)} className={`${field} w-full`} />
+                <input name="patronymic" value={patronymic} onChange={(e) => setPatronymic(e.target.value)} placeholder={t("patronymic")} aria-invalid={Boolean(fieldErrors.patronymic)} className={`${field} w-full`} />
                 {errorFor("patronymic")}
               </div>
               <div className="sm:col-span-3">
                 <input
-                  name="phone"
-                  type="tel"
-                  placeholder="+380 (__) ___-__-__"
+                  name="phone" type="tel"
                   value={phone}
                   onChange={(event) => setPhone(formatPhoneMask(event.target.value))}
                   onFocus={() => { if (!phone) setPhone("+380 ("); }}
-                  maxLength={19}
-                  autoComplete="tel"
+                  placeholder="+380 (__) ___-__-__"
+                  maxLength={19} autoComplete="tel"
                   aria-invalid={Boolean(fieldErrors.phone)}
                   className={`${field} w-full`}
                 />
                 {errorFor("phone")}
               </div>
               <div className="sm:col-span-3">
-                <input name="email" type="email" placeholder={t("email")} aria-invalid={Boolean(fieldErrors.email)} className={`${field} w-full`} />
+                <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("email")} aria-invalid={Boolean(fieldErrors.email)} className={`${field} w-full`} />
                 {errorFor("email")}
               </div>
               <div className="sm:col-span-2">
@@ -616,7 +607,7 @@ export function CheckoutForm({
                   <div className="relative">
                     <MessageCircle className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-graphite/40" size={17} />
                     <input
-                      name="telegram"
+                      name="telegram" value={telegram} onChange={(e) => setTelegram(e.target.value)}
                       placeholder={noContact ? `${copy.telegram} — ${copy.optional}` : copy.telegram}
                       disabled={noContact}
                       aria-invalid={Boolean(fieldErrors.telegram)}
@@ -625,9 +616,7 @@ export function CheckoutForm({
                   </div>
                   <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-graphite/60">
                     <input
-                      type="checkbox"
-                      name="noContact"
-                      className="h-4 w-4 accent-black"
+                      type="checkbox" name="noContact" className="h-4 w-4 accent-black"
                       checked={noContact}
                       onChange={(event) => {
                         setNoContact(event.target.checked);
@@ -651,7 +640,7 @@ export function CheckoutForm({
 
       {/* Step 2: Delivery */}
       <div className="mt-3 overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
-        {renderStepHeader(2, "step2", Truck)}
+        {renderStepHeader(2, "step2")}
         {activeStep === 2 && (
           <div className="border-t border-black/10 px-5 py-5">
             <div className="grid gap-3">
@@ -681,14 +670,12 @@ export function CheckoutForm({
                     {copy.locker}
                   </button>
                 </div>
-                <input type="hidden" name="deliveryMethod" value={deliveryMethod} />
               </div>
               <div>
                 <div className="relative">
                   <MapPin className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-graphite/40" size={17} />
                   <input
-                    name="city"
-                    value={city}
+                    name="city" value={city}
                     onChange={(event) => { setCity(event.target.value); setCityRef(""); setShowCityOptions(true); }}
                     onFocus={() => setShowCityOptions(true)}
                     onBlur={() => {
@@ -702,8 +689,7 @@ export function CheckoutForm({
                     aria-invalid={Boolean(fieldErrors.city)}
                     aria-expanded={showCityOptions && cityOptions.length > 0}
                     aria-controls="checkout-city-list"
-                    role="combobox"
-                    autoComplete="off"
+                    role="combobox" autoComplete="off"
                     className={`${field} w-full pl-11`}
                   />
                   <input type="hidden" name="cityRef" value={cityRef} />
@@ -780,7 +766,7 @@ export function CheckoutForm({
             </div>
             <div className="mt-4 flex justify-between">
               <button type="button" onClick={() => setActiveStep(1)} className="rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-graphite/70 hover:bg-mist">
-                {t("name").replace(/.*/, sc("step1"))}
+                {sc("step1")}
               </button>
               <button type="button" onClick={() => handleContinue(2)} className="rounded-lg bg-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-ink/90">
                 {sc("continue")}
@@ -792,17 +778,17 @@ export function CheckoutForm({
 
       {/* Step 3: Payment */}
       <div className="mt-3 overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
-        {renderStepHeader(3, "step3", CreditCard)}
+        {renderStepHeader(3, "step3")}
         {activeStep === 3 && (
           <div className="border-t border-black/10 px-5 py-5">
             <div className="grid gap-3">
-              <select name="paymentMethod" className={field}>
+              <select name="paymentMethod" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={field}>
                 <option value="cod">{sc("codLabel")}</option>
                 <option value="online">{sc("onlineLabel")}</option>
               </select>
               <div className="relative">
                 <MessageSquare className="pointer-events-none absolute left-4 top-4 text-graphite/40" size={17} />
-                <textarea name="comment" placeholder={t("comment")} className="min-h-28 rounded-lg border border-black/10 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:border-ink" />
+                <textarea name="comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder={t("comment")} className="min-h-28 rounded-lg border border-black/10 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:border-ink" />
               </div>
             </div>
             <div className="mt-4 flex justify-between">
@@ -819,10 +805,9 @@ export function CheckoutForm({
 
       {/* Step 4: Confirmation */}
       <div className="mt-3 overflow-hidden rounded-lg border border-black/10 bg-white shadow-card">
-        {renderStepHeader(4, "step4", Check)}
+        {renderStepHeader(4, "step4")}
         {activeStep === 4 && (
           <div className="border-t border-black/10 px-5 py-5">
-            {/* Review sections */}
             <div className="mb-5 grid gap-4 rounded-lg bg-mist/50 p-4 text-sm">
               <div className="flex items-start justify-between">
                 <div>
@@ -855,7 +840,6 @@ export function CheckoutForm({
               </div>
             </div>
 
-            {/* Order items */}
             <h3 className="mb-3 text-sm font-semibold">{ss("orderSummary")}</h3>
             <div className="mb-5 grid gap-3">
               {cartItems.map((item) => (
@@ -884,7 +868,6 @@ export function CheckoutForm({
               ))}
             </div>
 
-            {/* Summary totals */}
             <div className="rounded-lg border border-black/10 p-4 text-sm">
               <div className="flex justify-between py-1">
                 <span className="text-graphite/60">{ss("subtotal")}</span>
@@ -906,10 +889,9 @@ export function CheckoutForm({
               </div>
             </div>
 
-            {/* Agree + submit */}
             <div className="mt-5">
               <label className="flex items-start gap-2 text-sm text-graphite/70">
-                <input type="checkbox" name="agree" className="mt-1 accent-black" />
+                <input type="checkbox" name="agree" className="mt-1 accent-black" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                 {t("agree")}
               </label>
               {errorFor("agree")}
