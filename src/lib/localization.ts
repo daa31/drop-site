@@ -180,7 +180,6 @@ export const CHECKOUT_SUMMARY_COPY = {
   shippingCost: { uk: "Вартість доставки", ru: "Стоимость доставки", en: "Shipping cost" },
   shippingNote: { uk: "за тарифами оператора", ru: "по тарифам оператора", en: "at carrier rates" },
   alsoBought: { uk: "З цим товаром також купують", ru: "С этим товаром также покупают", en: "Also bought with this product" },
-  quickOrder: { uk: "Швидке замовлення по телефону", ru: "Быстрый заказ по телефону", en: "Quick phone order" },
   packs: { uk: "Упаковок", ru: "Упаковок", en: "Packs" },
 } satisfies Record<string, LocalizedText>;
 

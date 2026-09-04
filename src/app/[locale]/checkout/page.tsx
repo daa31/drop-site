@@ -102,13 +102,6 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
           </section>
         )}
 
-        <section className="mt-8 rounded-lg border border-black/10 bg-white p-5 shadow-card">
-          <h2 className="mb-3 font-semibold">{tr(CHECKOUT_SUMMARY_COPY.quickOrder, locale)}</h2>
-          <div className="flex items-center gap-3">
-            <span className="text-lg font-semibold">+380 (___) ___-__-__</span>
-          </div>
-          <p className="mt-2 text-xs text-graphite/50">{tr(CHECKOUT_SUMMARY_COPY.quickOrder, locale)}</p>
-        </section>
       </div>
     </div>
   );

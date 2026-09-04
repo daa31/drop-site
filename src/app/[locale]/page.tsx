@@ -172,33 +172,31 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       />
 
       <section className="relative min-h-[calc(100vh-72px)] overflow-hidden bg-ink text-white">
-        <div className="absolute inset-0 grid grid-cols-3">
-          {activeHeroImages.map((image, index) => (
-            <div
-              key={image}
-              className="relative overflow-hidden"
-              style={{
-                clipPath:
-                  index === 0
-                    ? "polygon(0 0, 100% 0, 82% 100%, 0 100%)"
-                    : index === 1
-                      ? "polygon(18% 0, 100% 0, 82% 100%, 0 100%)"
-                      : "polygon(18% 0, 100% 0, 100% 100%, 0 100%)",
-                marginLeft: index === 0 ? 0 : "-8vw",
-                width: index === 0 ? "calc(100% + 8vw)" : "calc(100% + 16vw)",
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={image}
-                alt=""
-                className="h-full w-full object-cover opacity-88"
-                style={{ objectPosition: "35% center" }}
-                loading={index === 0 ? "eager" : "lazy"}
-                decoding="async"
-              />
-            </div>
-          ))}
+        <div className="absolute inset-0 grid grid-cols-1 sm:grid-cols-3">
+          {activeHeroImages.map((image, index) => {
+            const overlapStyles =
+              index === 0
+                ? "sm:[clip-path:polygon(0_0,100%_0,82%_100%,0_100%)] sm:[margin-left:0] sm:[width:calc(100%+8vw)]"
+                : index === 1
+                  ? "sm:[clip-path:polygon(18%_0,100%_0,82%_100%,0_100%)] sm:[margin-left:-8vw] sm:[width:calc(100%+16vw)]"
+                  : "sm:[clip-path:polygon(18%_0,100%_0,100%_100%,0_100%)] sm:[margin-left:-8vw] sm:[width:calc(100%+16vw)]";
+            return (
+              <div
+                key={image}
+                className={`relative overflow-hidden ${index > 0 ? "hidden sm:block" : ""} ${overlapStyles}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image}
+                  alt=""
+                  className="h-full w-full object-cover opacity-88"
+                  style={{ objectPosition: "35% center" }}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                />
+              </div>
+            );
+          })}
         </div>
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(17,18,20,0.92),rgba(17,18,20,0.62),rgba(17,18,20,0.22))]" />
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-ink to-transparent" />
