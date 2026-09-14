@@ -5,6 +5,21 @@ import { tJson } from "@/lib/utils";
 import { ProductCard } from "@/components/ProductCard";
 import { toCard } from "@/lib/catalog";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { buildMetadata, brandDescription } from "@/lib/seo-meta";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const brand = await prisma.brand.findUnique({ where: { slug } });
+  if (!brand) return {};
+  return buildMetadata({
+    pageKey: "brands",
+    title: `${brand.name} | Locko`,
+    description: brandDescription(brand.name, locale as "uk" | "ru" | "en"),
+    path: `/brands/${slug}`,
+    locale,
+  });
+}
 
 export default async function BrandPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;

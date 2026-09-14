@@ -4,9 +4,16 @@ import { toCard } from "@/lib/catalog";
 import { ProductCard } from "@/components/ProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Link } from "@/i18n/routing";
+import { buildMetadata } from "@/lib/seo-meta";
+import type { Metadata } from "next";
 import { ArrowRight, Eye, Sparkles, Sun } from "lucide-react";
 
 const OPTICS_CATEGORIES = ["dioptrychni-rishennia", "fotokhromni-okuliary", "poliaryzatsiini-okuliary"];
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMetadata({ pageKey: "optics", descriptionKey: "optics", path: "/optics", locale });
+}
 
 export default async function OpticsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

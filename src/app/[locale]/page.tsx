@@ -5,6 +5,8 @@ import { tJson } from "@/lib/utils";
 import { toCard } from "@/lib/catalog";
 import { ProductCard } from "@/components/ProductCard";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
+import { buildMetadata } from "@/lib/seo-meta";
+import type { Metadata } from "next";
 import { ArrowRight, BadgeCheck, CreditCard, Glasses, Headphones, Shield, Sparkles, Truck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +85,16 @@ function randomHeroImages(urls: string[]): string[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled.slice(0, 3);
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMetadata({
+    pageKey: "home",
+    descriptionKey: "home",
+    path: "/",
+    locale,
+  });
 }
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {

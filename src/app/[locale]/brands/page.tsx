@@ -3,6 +3,13 @@ import { prisma } from "@/lib/db";
 import { tJson } from "@/lib/utils";
 import { Link } from "@/i18n/routing";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { buildMetadata } from "@/lib/seo-meta";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMetadata({ pageKey: "brands", descriptionKey: "brands", path: "/brands", locale });
+}
 
 export default async function Brands({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

@@ -1,6 +1,8 @@
 import { siteSettings } from "@/lib/settings";
 import { normalizeLocale, tr } from "@/lib/localization";
 import { ContactForm } from "@/components/ContactForm";
+import { buildMetadata } from "@/lib/seo-meta";
+import type { Metadata } from "next";
 
 const COPY = {
   title: { uk: "Контакти", ru: "Контакты", en: "Contacts" },
@@ -14,6 +16,11 @@ const COPY = {
     en: "Thank you! Your message has been sent.",
   },
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMetadata({ pageKey: "contacts", descriptionKey: "contacts", path: "/contacts", locale });
+}
 
 export default async function Contacts({
   params,

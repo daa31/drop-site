@@ -6,6 +6,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { tJson } from "@/lib/utils";
 import { CatalogControls } from "@/components/CatalogControls";
 import { Link } from "@/i18n/routing";
+import { buildMetadata, categoryDescription } from "@/lib/seo-meta";
+import type { Metadata } from "next";
 import { ArrowRight, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -62,6 +64,28 @@ function PageButton({
       {children}
     </Link>
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug?: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  if (slug) {
+    const category = await prisma.category.findUnique({ where: { slug } });
+    if (category) {
+      const name = tJson(category.name, locale);
+      return buildMetadata({
+        pageKey: "catalog",
+        title: `${name} | Locko`,
+        description: categoryDescription(name, locale as "uk" | "ru" | "en"),
+        path: `/catalog/${slug}`,
+        locale,
+      });
+    }
+  }
+  return buildMetadata({ pageKey: "catalog", descriptionKey: "catalog", path: "/catalog", locale });
 }
 
 export default async function CatalogPage({

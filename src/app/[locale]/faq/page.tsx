@@ -1,4 +1,13 @@
 import { siteSettings } from "@/lib/settings";
+import { buildMetadata, STATIC_PAGE_TITLE } from "@/lib/seo-meta";
+import { normalizeLocale } from "@/lib/localization";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const title = STATIC_PAGE_TITLE.faq[normalizeLocale(locale)];
+  return buildMetadata({ pageKey: "faq", title, descriptionKey: "faq", path: "/faq", locale });
+}
 
 const FAQ = [
   {

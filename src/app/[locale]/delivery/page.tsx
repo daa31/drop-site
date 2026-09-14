@@ -1,5 +1,7 @@
 import { siteSettings } from "@/lib/settings";
 import { normalizeLocale, tr } from "@/lib/localization";
+import { buildMetadata } from "@/lib/seo-meta";
+import type { Metadata } from "next";
 
 const COPY = {
   title: { uk: "Доставка і оплата", ru: "Доставка и оплата", en: "Delivery and Payment" },
@@ -7,6 +9,11 @@ const COPY = {
   payment: { uk: "Оплата", ru: "Оплата", en: "Payment" },
   returns: { uk: "Повернення", ru: "Возврат", en: "Returns" },
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMetadata({ pageKey: "delivery", descriptionKey: "delivery", path: "/delivery", locale });
+}
 
 export default async function Delivery({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: rawLocale } = await params;
