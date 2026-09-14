@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/db";
 import { tJson } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { ExpandableText } from "@/components/ExpandableText";
 import { ProductCard } from "@/components/ProductCard";
 import { toCard } from "@/lib/catalog";
 import { ProductGallery } from "@/components/ProductGallery";
@@ -398,7 +399,9 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
       <div className="container-f mt-14 grid items-start gap-10 lg:grid-cols-2">
         <section className="rounded-lg border border-black/10 bg-white p-5 shadow-card">
           <h2 className="font-display text-xl">{descriptionTitle}</h2>
-          <div className="mt-3 whitespace-pre-line leading-7 text-graphite/80">{description}</div>
+          <div className="mt-3 whitespace-pre-line leading-7 text-graphite/80">
+            <ExpandableText text={description} />
+          </div>
         </section>
         <section className="rounded-lg border border-black/10 bg-white p-6 shadow-card">
           <h2 className="font-display text-xl">{t("specs")}</h2>
