@@ -1,5 +1,0 @@
-{
-  "/api/search/route": "/api/search",
-  "/[locale]/catalog/page": "/[locale]/catalog",
-  "/[locale]/page": "/[locale]"
-}

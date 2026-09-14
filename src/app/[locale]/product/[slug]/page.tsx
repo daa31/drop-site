@@ -331,7 +331,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   const descriptionTitle = locale === "ru" ? "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435" : locale === "en" ? "Description" : "\u041e\u043f\u0438\u0441";
 
   return (
-    <div className="pb-24 lg:pb-16">
+    <div className="pb-16 lg:pb-16">
       <RecentlyTracker slug={product.slug} />
       <script
         type="application/ld+json"

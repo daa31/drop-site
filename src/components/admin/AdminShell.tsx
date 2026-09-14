@@ -14,7 +14,6 @@ import {
   ReceiptText,
   Search,
   Settings,
-  Tags,
   UserCog,
   Users,
 } from "lucide-react";
@@ -35,7 +34,6 @@ const CRM_NAV: NavItem[] = [
 ];
 
 const CATALOG_NAV: NavItem[] = [
-  { labelKey: "brands", href: "/admin/brands", icon: Tags },
   { labelKey: "import", href: "/admin/import", icon: FileDown },
   { labelKey: "prices", href: "/admin/prices", icon: BarChart3 },
 ];

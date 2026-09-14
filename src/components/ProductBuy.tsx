@@ -93,7 +93,7 @@ export function ProductBuy({
           </button>
         </div>
       </div>
-      <div className="mt-5 hidden gap-3 lg:flex">
+      <div className="mt-5 flex gap-3">
         <button
           type="button"
           disabled={!canOrder}
@@ -101,10 +101,11 @@ export function ProductBuy({
             fly(event.currentTarget, "[data-cart-target]", "cart-drop");
             await add();
           }}
-          className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-7 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-graphite/35"
+          className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-4 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-graphite/35 sm:px-7 lg:flex-none"
         >
           <ShoppingBag size={17} />
-          {canOrder ? t("add") : t("out")}
+          {t("add")}
+          <span className="lg:hidden"> - {formatPrice(total, locale)}</span>
         </button>
         <button
           type="button"
@@ -130,46 +131,6 @@ export function ProductBuy({
           <Share2 size={18} />
           {shared && <span className="absolute -bottom-7 whitespace-nowrap rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-white">{t("copied")}</span>}
         </button>
-      </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white p-3 lg:hidden">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={!canOrder}
-            onClick={async (event) => {
-              fly(event.currentTarget, "[data-cart-target]", "cart-drop");
-              await add();
-            }}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-ink text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-graphite/35"
-          >
-            <ShoppingBag size={17} />
-            {canOrder ? `${t("add")} - ${formatPrice(total, locale)}` : t("out")}
-          </button>
-          <button
-            type="button"
-            onClick={(event) => {
-              fly(event.currentTarget, "[data-wishlist-target]", "wish-drop");
-              const change = setWishlistSlug(slug, true);
-              setIsWished(change.added);
-            }}
-            className={`grid h-12 w-12 shrink-0 place-items-center rounded-full border bg-white transition hover:border-red-500 hover:text-red-600 ${
-              isWished ? "border-red-500 text-red-600" : "border-black/10"
-            }`}
-            aria-label={t("fav")}
-            aria-pressed={isWished}
-          >
-            <Heart size={18} fill={isWished ? "currentColor" : "none"} />
-          </button>
-          <button
-            type="button"
-            onClick={share}
-            className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full border border-black/10 bg-white transition hover:border-ink"
-            aria-label={t("share")}
-          >
-            <Share2 size={18} />
-            {shared && <span className="absolute -top-8 whitespace-nowrap rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-white">{t("copied")}</span>}
-          </button>
-        </div>
       </div>
     </div>
   );
