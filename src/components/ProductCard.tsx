@@ -181,7 +181,7 @@ export function ProductCard({ p, locale }: { p: CardProduct; locale: string }) {
               alt={name}
               fill
               sizes="(min-width: 1280px) 24vw, (min-width: 640px) 45vw, 92vw"
-              className="object-contain p-3 transition duration-700 group-hover:scale-[1.04]"
+              className="object-cover transition duration-700 group-hover:scale-[1.04]"
             />
           ) : (
             <div className="grid h-full place-items-center text-graphite/30">Locko</div>
