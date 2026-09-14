@@ -52,32 +52,6 @@ export async function generateMetadata({
 }
 
 function copy(locale: string) {
-  if (locale === "ru") {
-    return {
-      verified: "Проверенный артикул",
-      stock: "Контроль наличия",
-      delivery: "Новая почта",
-      confirmation: "Подтверждение заказа",
-      noKit: "Комплектация соответствует поставке производителя.",
-      noUsage: "Подходит для работы, спорта или активного отдыха согласно характеристикам модели.",
-      attr: {
-        lensColor: "Цвет линзы",
-        frameColor: "Цвет оправы",
-        antiFog: "Антизапотевание",
-        polarized: "Поляризация",
-        photochromic: "Фотохром",
-        interchangeable: "Сменные линзы",
-        rxInsert: "Диоптрическая вставка",
-        uv: "UV-защита",
-      },
-      value: { yes: "Да", no: "Нет" },
-      summary(name: string, brand?: string | null, category?: string, attrs?: Record<string, string>) {
-        const lens = attrs?.lensColor ? ` Линза: ${prettyValue(attrs.lensColor, locale)}.` : "";
-        const frame = attrs?.frameColor ? ` Оправа: ${prettyValue(attrs.frameColor, locale)}.` : "";
-        return `${name} - модель ${brand || "поставщика"}${category ? ` из категории "${category}"` : ""}. Подходит для ежедневного использования по назначению, защиты глаз и комфортной посадки.${lens}${frame} Артикул помогает быстро сверить товар при подтверждении заказа.`;
-      },
-    };
-  }
   if (locale === "en") {
     return {
       verified: "Verified SKU",
@@ -221,28 +195,20 @@ function fallbackDescription(opts: {
   const { locale, name, brand, category, sku, attrs, weightGrams, dimensions } = opts;
   const isEyewear = /окуляр|очк|glasses|goggle/i.test(name);
   const details = [
-    sku ? `- ${locale === "ru" ? "артикул" : locale === "en" ? "SKU" : "артикул"}: ${sku};` : "",
-    brand ? `- ${locale === "ru" ? "бренд" : locale === "en" ? "brand" : "бренд"}: ${brand};` : "",
-    category ? `- ${locale === "ru" ? "категория" : locale === "en" ? "category" : "категорія"}: ${category};` : "",
-    attrs.lensColor ? `- ${locale === "ru" ? "цвет линзы" : locale === "en" ? "lens color" : "колір лінзи"}: ${prettyValue(attrs.lensColor, locale)};` : "",
-    attrs.frameColor ? `- ${locale === "ru" ? "тип/цвет оправы" : locale === "en" ? "frame" : "тип/колір оправи"}: ${prettyValue(attrs.frameColor, locale)};` : "",
+    sku ? `- ${locale === "en" ? "SKU" : "артикул"}: ${sku};` : "",
+    brand ? `- ${locale === "en" ? "brand" : "бренд"}: ${brand};` : "",
+    category ? `- ${locale === "en" ? "category" : "категорія"}: ${category};` : "",
+    attrs.lensColor ? `- ${locale === "en" ? "lens color" : "колір лінзи"}: ${prettyValue(attrs.lensColor, locale)};` : "",
+    attrs.frameColor ? `- ${locale === "en" ? "frame" : "тип/колір оправи"}: ${prettyValue(attrs.frameColor, locale)};` : "",
     attrs.uv ? `- UV: ${prettyValue(attrs.uv, locale)};` : "",
     attrs.antiFog ? `- Anti-Fog: ${prettyValue(attrs.antiFog, locale)};` : "",
-    attrs.polarized ? `- ${locale === "ru" ? "поляризация" : locale === "en" ? "polarized" : "поляризація"}: ${prettyValue(attrs.polarized, locale)};` : "",
-    attrs.photochromic ? `- ${locale === "ru" ? "фотохром" : locale === "en" ? "photochromic" : "фотохром"}: ${prettyValue(attrs.photochromic, locale)};` : "",
-    attrs.interchangeable ? `- ${locale === "ru" ? "сменные линзы" : locale === "en" ? "interchangeable lenses" : "змінні лінзи"}: ${prettyValue(attrs.interchangeable, locale)};` : "",
-    attrs.rxInsert ? `- ${locale === "ru" ? "диоптрическая вставка" : locale === "en" ? "RX insert" : "діоптрична вставка"}: ${prettyValue(attrs.rxInsert, locale)};` : "",
-    dimensions ? `- ${locale === "ru" ? "размеры" : locale === "en" ? "dimensions" : "розміри"}: ${dimensions};` : "",
-    weightGrams ? `- ${locale === "ru" ? "вес" : locale === "en" ? "weight" : "вага"}: ${weightGrams} г;` : "",
+    attrs.polarized ? `- ${locale === "en" ? "polarized" : "поляризація"}: ${prettyValue(attrs.polarized, locale)};` : "",
+    attrs.photochromic ? `- ${locale === "en" ? "photochromic" : "фотохром"}: ${prettyValue(attrs.photochromic, locale)};` : "",
+    attrs.interchangeable ? `- ${locale === "en" ? "interchangeable lenses" : "змінні лінзи"}: ${prettyValue(attrs.interchangeable, locale)};` : "",
+    attrs.rxInsert ? `- ${locale === "en" ? "RX insert" : "діоптрична вставка"}: ${prettyValue(attrs.rxInsert, locale)};` : "",
+    dimensions ? `- ${locale === "en" ? "dimensions" : "розміри"}: ${dimensions};` : "",
+    weightGrams ? `- ${locale === "en" ? "weight" : "вага"}: ${weightGrams} г;` : "",
   ].filter(Boolean);
-
-  if (locale === "ru") {
-    return [
-      `${name} - ${brand ? `товар бренда ${brand}` : "позиция из каталога Locko"}${category ? ` в разделе "${category}"` : ""}. ${isEyewear ? "Модель подобрана для защиты зрения, комфортной посадки и ежедневного использования по назначению." : "Аксессуар помогает удобно хранить, переносить или обслуживать очки и дополняет базовый набор пользователя."}`,
-      details.length ? `Основные данные:\n${details.join("\n")}` : "",
-      "Перед отправкой менеджер Locko сверяет артикул, наличие и комплектацию, чтобы клиент получил именно выбранную позицию.",
-    ].filter(Boolean).join("\n\n");
-  }
 
   if (locale === "en") {
     return [
@@ -329,7 +295,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
     : tJson(product.shortDescription, locale) || firstParagraph(description) || c.summary(name, product.brand?.name, categoryName, attrs);
   const kit = isEn && !hasEnKit ? c.noKit : tJson(product.kit, locale) || c.noKit;
   const usage = isEn && !hasEnUsage ? c.noUsage : tJson(product.usage, locale) || c.noUsage;
-  const descriptionTitle = locale === "ru" ? "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435" : locale === "en" ? "Description" : "\u041e\u043f\u0438\u0441";
+  const descriptionTitle = locale === "en" ? "Description" : "Опис";
 
   return (
     <div className="pb-16 lg:pb-16">
@@ -400,7 +366,11 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
         <section className="rounded-lg border border-black/10 bg-white p-5 shadow-card">
           <h2 className="font-display text-xl">{descriptionTitle}</h2>
           <div className="mt-3 whitespace-pre-line leading-7 text-graphite/80">
-            <ExpandableText text={description} />
+            <ExpandableText
+              text={description}
+              showMoreLabel={locale === "en" ? "Read more" : "Детальніше"}
+              collapseLabel={locale === "en" ? "Collapse" : "Згорнути"}
+            />
           </div>
         </section>
         <section className="rounded-lg border border-black/10 bg-white p-6 shadow-card">

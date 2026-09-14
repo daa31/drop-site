@@ -31,7 +31,7 @@ interface TurnstileWidgetProps {
 
 const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const SCRIPT_ID = "turnstile-script";
-const LANG_MAP: Record<string, string> = { uk: "uk", ru: "ru", en: "en" };
+const LANG_MAP: Record<string, string> = { uk: "uk", en: "en" };
 
 export function TurnstileWidget({ siteKey, onToken, theme = "light" }: TurnstileWidgetProps) {
   const locale = useLocale();

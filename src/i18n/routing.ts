@@ -4,7 +4,7 @@ import { createElement } from "react";
 import type { ComponentProps } from "react";
 
 export const routing = defineRouting({
-  locales: ["uk", "ru", "en"],
+  locales: ["uk", "en"],
   defaultLocale: "uk",
   localePrefix: "as-needed",
 });

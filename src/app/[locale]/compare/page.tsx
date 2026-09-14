@@ -116,13 +116,13 @@ export default function ComparePage() {
         </thead>
         <tbody>
           <tr className="border-t">
-            <td className="p-3 text-graphite/50">{locale === "en" ? "Price" : locale === "ru" ? "Цена" : "Ціна"}</td>
+            <td className="p-3 text-graphite/50">{locale === "en" ? "Price" : "Ціна"}</td>
             {items.map((i) => (
               <td key={i.slug} className="p-3 font-semibold">{i.retailPrice} ₴</td>
             ))}
           </tr>
           <tr className="border-t">
-            <td className="p-3 text-graphite/50">{locale === "en" ? "Brand" : locale === "ru" ? "Бренд" : "Бренд"}</td>
+            <td className="p-3 text-graphite/50">{locale === "en" ? "Brand" : "Бренд"}</td>
             {items.map((i) => (
               <td key={i.slug} className="p-3">{i.brand?.name || "—"}</td>
             ))}

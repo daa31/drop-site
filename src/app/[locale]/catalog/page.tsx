@@ -79,7 +79,7 @@ export async function generateMetadata({
       return buildMetadata({
         pageKey: "catalog",
         title: `${name} | Locko`,
-        description: categoryDescription(name, locale as "uk" | "ru" | "en"),
+        description: categoryDescription(name, locale),
         path: `/catalog/${slug}`,
         locale,
       });

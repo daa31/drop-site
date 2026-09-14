@@ -67,7 +67,7 @@ function setAdminLocale(locale: Locale) {
 
 function LocaleSwitch({ locale, compact = false }: { locale: Locale; compact?: boolean }) {
   return (
-    <div className={`grid grid-cols-3 gap-1 rounded-lg border border-black/10 bg-white p-1 ${compact ? "" : "w-full"}`}>
+    <div className={`grid grid-cols-2 gap-1 rounded-lg border border-black/10 bg-white p-1 ${compact ? "" : "w-full"}`}>
       {LOCALES.map((item) => (
         <button
           key={item}

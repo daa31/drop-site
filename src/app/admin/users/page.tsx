@@ -9,37 +9,34 @@ import { formatDateTime, type Locale } from "@/lib/localization";
 import { isEmailIdentifier, isValidEmail, isValidUsername, normalizeIdentifier } from "@/lib/user-identity";
 
 const COPY = {
-  title: { uk: "Акаунти", ru: "Аккаунты", en: "Accounts" },
+  title: { uk: "Акаунти", en: "Accounts" },
   subtitle: {
     uk: "Усі логіни сайту: адміністратори й покупці. Тут можна створити новий акаунт і одразу задати роль.",
-    ru: "Все логины сайта: администраторы и покупатели. Здесь можно создать новый аккаунт и сразу задать роль.",
     en: "All site logins: administrators and buyers. Create an account and set its role here.",
   },
-  createTitle: { uk: "Додати користувача", ru: "Добавить пользователя", en: "Add user" },
+  createTitle: { uk: "Додати користувача", en: "Add user" },
   createHint: {
     uk: "Логін може бути звичайним ім'ям користувача або email. Пароль - від 4 символів.",
-    ru: "Логин может быть обычным именем пользователя или email. Пароль - от 4 символов.",
     en: "Login can be a username or an email. Password must be at least 4 characters.",
   },
-  identifier: { uk: "Логін або email", ru: "Логин или email", en: "Login or email" },
-  name: { uk: "Ім'я", ru: "Имя", en: "Name" },
-  phone: { uk: "Телефон", ru: "Телефон", en: "Phone" },
-  password: { uk: "Пароль", ru: "Пароль", en: "Password" },
-  role: { uk: "Роль", ru: "Роль", en: "Role" },
-  admin: { uk: "Адмін", ru: "Админ", en: "Admin" },
-  customer: { uk: "Покупець", ru: "Покупатель", en: "Customer" },
-  listTitle: { uk: "Усі акаунти", ru: "Все аккаунты", en: "All accounts" },
-  login: { uk: "Логін", ru: "Логин", en: "Login" },
-  contact: { uk: "Контакт", ru: "Контакт", en: "Contact" },
-  createdAt: { uk: "Створено", ru: "Создан", en: "Created" },
-  created: { uk: "Користувача створено.", ru: "Пользователь создан.", en: "User created." },
-  invalid: { uk: "Заповніть логін, ім'я і пароль від 4 символів.", ru: "Заполните логин, имя и пароль от 4 символов.", en: "Fill login, name and a 4+ character password." },
+  identifier: { uk: "Логін або email", en: "Login or email" },
+  name: { uk: "Ім'я", en: "Name" },
+  phone: { uk: "Телефон", en: "Phone" },
+  password: { uk: "Пароль", en: "Password" },
+  role: { uk: "Роль", en: "Role" },
+  admin: { uk: "Адмін", en: "Admin" },
+  customer: { uk: "Покупець", en: "Customer" },
+  listTitle: { uk: "Усі акаунти", en: "All accounts" },
+  login: { uk: "Логін", en: "Login" },
+  contact: { uk: "Контакт", en: "Contact" },
+  createdAt: { uk: "Створено", en: "Created" },
+  created: { uk: "Користувача створено.", en: "User created." },
+  invalid: { uk: "Заповніть логін, ім'я і пароль від 4 символів.", en: "Fill login, name and a 4+ character password." },
   invalidIdentifier: {
     uk: "Логін може містити літери, цифри, крапку, дефіс або підкреслення. Email має бути коректним.",
-    ru: "Логин может содержать буквы, цифры, точку, дефис или подчеркивание. Email должен быть корректным.",
     en: "Username can contain letters, numbers, dot, hyphen or underscore. Email must be valid.",
   },
-  exists: { uk: "Такий логін або email уже існує.", ru: "Такой логин или email уже существует.", en: "This login or email already exists." },
+  exists: { uk: "Такий логін або email уже існує.", en: "This login or email already exists." },
 } satisfies Record<string, Record<Locale, string>>;
 
 function t(key: keyof typeof COPY, locale: Locale) {

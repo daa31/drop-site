@@ -76,8 +76,8 @@ export default function WishlistPage() {
           className="relative inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium transition hover:border-ink"
         >
           <Share2 size={16} />
-          {locale === "en" ? "Share" : locale === "ru" ? "Поделиться" : "Поділитися"}
-          {shared && <span className="absolute -top-8 right-0 whitespace-nowrap rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-white">{locale === "en" ? "Copied!" : locale === "ru" ? "Скопійовано!" : "Скопійовано!"}</span>}
+          {locale === "en" ? "Share" : "Поділитися"}
+          {shared && <span className="absolute -top-8 right-0 whitespace-nowrap rounded-full bg-ink px-2 py-1 text-[11px] font-medium text-white">{locale === "en" ? "Copied!" : "Скопійовано!"}</span>}
         </button>
       </div>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

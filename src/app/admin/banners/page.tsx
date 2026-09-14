@@ -11,37 +11,32 @@ import { tJson } from "@/lib/utils";
 const SLOT_OPTIONS = ["home_hero", "home_hero_1", "home_hero_2", "home_hero_3", "catalog_top", "product_side"];
 
 const COPY = {
-  title: { uk: "Банери", ru: "Баннеры", en: "Banners" },
+  title: { uk: "Банери", en: "Banners" },
   subtitle: {
     uk: "Керуйте промо-блоками сайту, зображеннями головного екрана, посиланнями та порядком показу.",
-    ru: "Управляйте промо-блоками сайта, изображениями главного экрана, ссылками и порядком показа.",
     en: "Manage site promo blocks, home hero images, links and display order.",
   },
-  newBanner: { uk: "Новий банер", ru: "Новый баннер", en: "New banner" },
-  editBanner: { uk: "Редагувати", ru: "Редактировать", en: "Edit" },
-  preview: { uk: "Прев'ю", ru: "Превью", en: "Preview" },
-  slot: { uk: "Слот", ru: "Слот", en: "Slot" },
-  order: { uk: "Порядок", ru: "Порядок", en: "Order" },
-  active: { uk: "Активний", ru: "Активный", en: "Active" },
-  titleUk: { uk: "Заголовок UA", ru: "Заголовок UA", en: "Title UA" },
-  titleRu: { uk: "Заголовок RU", ru: "Заголовок RU", en: "Title RU" },
-  titleEn: { uk: "Заголовок EN", ru: "Заголовок EN", en: "Title EN" },
-  subtitleUk: { uk: "Підзаголовок UA", ru: "Подзаголовок UA", en: "Subtitle UA" },
-  subtitleRu: { uk: "Підзаголовок RU", ru: "Подзаголовок RU", en: "Subtitle RU" },
-  subtitleEn: { uk: "Підзаголовок EN", ru: "Подзаголовок EN", en: "Subtitle EN" },
-  href: { uk: "Посилання", ru: "Ссылка", en: "Link" },
-  image: { uk: "URL зображення", ru: "URL изображения", en: "Image URL" },
-  saved: { uk: "Банер збережено.", ru: "Баннер сохранен.", en: "Banner saved." },
-  deleted: { uk: "Банер видалено.", ru: "Баннер удален.", en: "Banner deleted." },
+  newBanner: { uk: "Новий банер", en: "New banner" },
+  editBanner: { uk: "Редагувати", en: "Edit" },
+  preview: { uk: "Прев'ю", en: "Preview" },
+  slot: { uk: "Слот", en: "Slot" },
+  order: { uk: "Порядок", en: "Order" },
+  active: { uk: "Активний", en: "Active" },
+  titleUk: { uk: "Заголовок UA", en: "Title UA" },
+  titleEn: { uk: "Заголовок EN", en: "Title EN" },
+  subtitleUk: { uk: "Підзаголовок UA", en: "Subtitle UA" },
+  subtitleEn: { uk: "Підзаголовок EN", en: "Subtitle EN" },
+  href: { uk: "Посилання", en: "Link" },
+  image: { uk: "URL зображення", en: "Image URL" },
+  saved: { uk: "Банер збережено.", en: "Banner saved." },
+  deleted: { uk: "Банер видалено.", en: "Banner deleted." },
   invalid: {
     uk: "Заповніть слот, заголовок, посилання та URL зображення.",
-    ru: "Заполните слот, заголовок, ссылку и URL изображения.",
     en: "Fill slot, title, link and image URL.",
   },
-  empty: { uk: "Банерів поки немає.", ru: "Баннеров пока нет.", en: "No banners yet." },
+  empty: { uk: "Банерів поки немає.", en: "No banners yet." },
   heroHint: {
     uk: "Для головної сторінки використовуйте `home_hero` для тексту і `home_hero_1`, `home_hero_2`, `home_hero_3` для трьох фото.",
-    ru: "Для главной страницы используйте `home_hero` для текста и `home_hero_1`, `home_hero_2`, `home_hero_3` для трех фото.",
     en: "Use `home_hero` for home text and `home_hero_1`, `home_hero_2`, `home_hero_3` for the three photos.",
   },
 } satisfies Record<string, Record<Locale, string>>;
@@ -60,7 +55,6 @@ function textValue(fd: FormData, key: string) {
 
 type BannerText = {
   uk: string;
-  ru: string;
   en: string;
 };
 
@@ -71,13 +65,11 @@ function bannerRedirect(params: Record<string, string>): never {
 
 function localizedFromForm(fd: FormData, prefix: "title" | "subtitle"): BannerText | null {
   const uk = textValue(fd, `${prefix}_uk`);
-  const ru = textValue(fd, `${prefix}_ru`);
   const en = textValue(fd, `${prefix}_en`);
-  const fallback = uk || ru || en;
+  const fallback = uk || en;
   if (!fallback) return null;
   return {
     uk: uk || fallback,
-    ru: ru || fallback,
     en: en || fallback,
   };
 }
@@ -194,14 +186,12 @@ export default async function BannersPage({
               {t("active", locale)}
             </label>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {textField(t("titleUk", locale), "title_uk", "", true)}
-            {textField(t("titleRu", locale), "title_ru")}
             {textField(t("titleEn", locale), "title_en")}
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {textField(t("subtitleUk", locale), "subtitle_uk")}
-            {textField(t("subtitleRu", locale), "subtitle_ru")}
             {textField(t("subtitleEn", locale), "subtitle_en")}
           </div>
           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
@@ -263,14 +253,12 @@ export default async function BannersPage({
                   {t("active", locale)}
                 </label>
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2">
                 {textField(t("titleUk", locale), "title_uk", localizedValue(banner.title, "uk"), true)}
-                {textField(t("titleRu", locale), "title_ru", localizedValue(banner.title, "ru"))}
                 {textField(t("titleEn", locale), "title_en", localizedValue(banner.title, "en"))}
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2">
                 {textField(t("subtitleUk", locale), "subtitle_uk", localizedValue(banner.subtitle, "uk"))}
-                {textField(t("subtitleRu", locale), "subtitle_ru", localizedValue(banner.subtitle, "ru"))}
                 {textField(t("subtitleEn", locale), "subtitle_en", localizedValue(banner.subtitle, "en"))}
               </div>
               <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">

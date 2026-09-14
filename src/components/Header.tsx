@@ -92,8 +92,8 @@ export function Header({
     return () => window.removeEventListener(WISHLIST_EVENT, update);
   }, [wishOpen]);
 
-  const openWishlistText = locale === "ru" ? "Открыть избранное" : locale === "en" ? "Open wishlist" : "Відкрити обране";
-  const closeText = locale === "ru" ? "Закрыть" : locale === "en" ? "Close" : "Закрити";
+  const openWishlistText = locale === "en" ? "Open wishlist" : "Відкрити обране";
+  const closeText = locale === "en" ? "Close" : "Закрити";
 
   useEffect(() => {
     const query = q.trim();
@@ -158,7 +158,7 @@ export function Header({
     <button
       type="button"
       onClick={clearSearch}
-      aria-label={locale === "ru" ? "Очистить" : locale === "en" ? "Clear" : "Очистити"}
+      aria-label={locale === "en" ? "Clear" : "Очистити"}
       className="focus-ring absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-graphite/50 transition hover:bg-mist hover:text-graphite"
     >
       <X size={15} />
@@ -169,7 +169,6 @@ export function Header({
     () =>
       [
         { id: "uk", label: "UA" },
-        { id: "ru", label: "RU" },
         { id: "en", label: "EN" },
       ] as const,
     [],

@@ -174,14 +174,14 @@ export function ProductCard({ p, locale }: { p: CardProduct; locale: string }) {
   return (
     <>
       <article className={`group relative flex min-h-[320px] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-card transition duration-300 ${canOrder ? "hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(17,18,20,0.12)]" : "grayscale opacity-60"}`}>
-        <Link href={`/product/${p.slug}`} prefetch={false} className="relative aspect-square overflow-hidden bg-[#eef0ed]">
+        <Link href={`/product/${p.slug}`} prefetch={false} className="relative aspect-[4/3] overflow-hidden bg-[#eef0ed]">
           {p.image ? (
             <Image
               src={p.image}
               alt={name}
               fill
               sizes="(min-width: 1280px) 24vw, (min-width: 640px) 45vw, 92vw"
-              className="object-cover transition duration-700 group-hover:scale-[1.04]"
+              className="object-contain transition duration-700 group-hover:scale-[1.04]"
             />
           ) : (
             <div className="grid h-full place-items-center text-graphite/30">Locko</div>

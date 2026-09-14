@@ -40,18 +40,6 @@ const categoryImages = [
 ];
 
 function localCopy(locale: string) {
-  if (locale === "ru") {
-    return {
-      brandLine: "Locko / защитные очки",
-      taskEyebrow: "По задаче",
-      collection: "Подборка",
-      recommended: "Рекомендуем",
-      statModels: "моделей в каталоге",
-      guideEyebrow: "Подбор по задаче",
-      guideTitle: "Locko подбирает очки под вашу задачу",
-      guideText: "Укажите, где будете использовать очки, какую линзу хотите и нужен ли Anti-Fog. Покажем модели, которые подходят по этим условиям.",
-    };
-  }
   if (locale === "en") {
     return {
       brandLine: "Locko / protective eyewear",

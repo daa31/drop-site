@@ -9,22 +9,6 @@ type Mode = "login" | "reg";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function localCopy(locale: string) {
-  if (locale === "ru") {
-    return {
-      identifier: "Email или логин",
-      emailPlaceholder: "email@example.com",
-      name: "Имя",
-      phone: "Телефон",
-      phonePlaceholder: "+380 (__) ___-__-__",
-      optional: "необязательно",
-      required: "обязательно",
-      error: "Проверьте email/логин и пароль.",
-      invalid: "Заполните имя, введите корректный email и пароль не короче 4 символов.",
-      invalidIdentifier: "Нужен корректный email.",
-      exists: "Такой email или логин уже зарегистрирован.",
-      sending: "Отправляем...",
-    };
-  }
   if (locale === "en") {
     return {
       identifier: "Email or login",

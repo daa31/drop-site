@@ -1,6 +1,9 @@
-export const LOCALES = ["uk", "ru", "en"] as const;
+export const LOCALES = ["uk", "en"] as const;
 
 export type Locale = (typeof LOCALES)[number];
+
+/* Історичні дані в БД зберігають третю мову; тип лишаємо для сумісності, у UI вона не використовується. */
+export type StoredLocale = "uk" | "ru" | "en";
 
 export function normalizeLocale(locale?: string | null): Locale {
   return LOCALES.includes(locale as Locale) ? (locale as Locale) : "uk";
@@ -8,13 +11,12 @@ export function normalizeLocale(locale?: string | null): Locale {
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   uk: "UA",
-  ru: "RU",
   en: "EN",
 };
 
 export const ADMIN_LOCALE_COOKIE = "locko_admin_locale";
 
-export type LocalizedText = Record<Locale, string>;
+export type LocalizedText = Record<StoredLocale, string>;
 
 export function tr(value: LocalizedText, locale?: string | null) {
   return value[normalizeLocale(locale)];
@@ -76,10 +78,7 @@ export function formatShortDate(date: Date | undefined | null, locale?: string |
 }
 
 export function localeCode(locale?: string | null) {
-  const current = normalizeLocale(locale);
-  if (current === "uk") return "uk-UA";
-  if (current === "ru") return "ru-RU";
-  return "en-US";
+  return normalizeLocale(locale) === "en" ? "en-US" : "uk-UA";
 }
 
 const TEXT_FIXES: Record<Locale, Array<[RegExp, string]>> = {
@@ -93,16 +92,6 @@ const TEXT_FIXES: Record<Locale, Array<[RegExp, string]>> = {
     [/песочные/gi, "пісочні"],
     [/черные/gi, "чорні"],
     [/размер/gi, "розмір"],
-  ],
-  ru: [
-    [/Окуляри захисні/gi, "Очки защитные"],
-    [/Захисні окуляри/gi, "Защитные очки"],
-    [/зі змінними лінзами/gi, "со сменными линзами"],
-    [/з ущільнювачем/gi, "с уплотнителем"],
-    [/серветка/gi, "салфетка"],
-    [/пісочні/gi, "песочные"],
-    [/чорні/gi, "черные"],
-    [/розмір/gi, "размер"],
   ],
   en: [
     [/Окуляри захисні зі змінними лінзами/gi, "Safety glasses with interchangeable lenses"],

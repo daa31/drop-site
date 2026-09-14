@@ -58,28 +58,6 @@ function mailCopy(locale: string) {
       online: "Online payment",
     };
   }
-  if (current === "ru") {
-    return {
-      subject: (number: number, total: string) => `Новый заказ #${number} на ${total}`,
-      title: (number: number) => `Новый заказ #${number}`,
-      intro: "На сайте оформлен новый заказ.",
-      customer: "Клиент",
-      phone: "Телефон",
-      email: "Email",
-      telegram: "Telegram",
-      city: "Город",
-      warehouse: "Отделение",
-      payment: "Оплата",
-      items: "Товары",
-      total: "Итого",
-      comment: "Комментарий",
-      admin: "Админка",
-      open: "Открыть заказ",
-      noContact: "Не связываться с клиентом",
-      cod: "Оплата при получении",
-      online: "Онлайн-оплата",
-    };
-  }
   return {
     subject: (number: number, total: string) => `Нове замовлення #${number} на ${total}`,
     title: (number: number) => `Нове замовлення #${number}`,
@@ -181,25 +159,6 @@ function customerMailCopy(locale: string) {
       footer: "Locko — store of protective eyewear.",
     };
   }
-  if (current === "ru") {
-    return {
-      subject: (number: number) => `Ваш заказ №${number} принят — Locko`,
-      greeting: (name: string) => `Здравствуйте, ${name}!`,
-      thanks: "Спасибо за ваш заказ. Мы получили его и уже готовим к отправке.",
-      manager: "Скоро с вами свяжется менеджер в Telegram, чтобы подтвердить детали заказа.",
-      deliveryTitle: "Доставка",
-      city: "Город",
-      warehouse: "Отделение / почтомат",
-      payment: "Оплата",
-      cod: "Оплата при получении",
-      online: "Онлайн-оплата",
-      itemsTitle: "Ваш заказ",
-      total: "Итого",
-      track: "Посмотреть заказ",
-      trackHint: "По кнопке ниже вы перейдёте на страницу заказа в нашем магазине, где сможете следить за его статусом.",
-      footer: "Locko — магазин защитных очков.",
-    };
-  }
   return {
     subject: (number: number) => `Ваше замовлення №${number} прийнято — Locko`,
     greeting: (name: string) => `Вітаємо, ${name}!`,
@@ -222,10 +181,10 @@ function customerMailCopy(locale: string) {
 function deliveryMethodLabel(method: string, locale: string) {
   const c = customerMailCopy(locale);
   if (method === "nova_poshta_locker") {
-    return normalizeLocale(locale) === "en" ? "Nova Poshta parcel locker" : normalizeLocale(locale) === "ru" ? "Новая почта, почтомат" : "Нова пошта, поштомат";
+    return normalizeLocale(locale) === "en" ? "Nova Poshta parcel locker" : "Нова пошта, поштомат";
   }
   if (method === "nova_poshta_branch" || method === "nova_poshta") {
-    return normalizeLocale(locale) === "en" ? "Nova Poshta branch" : normalizeLocale(locale) === "ru" ? "Новая почта, отделение" : "Нова пошта, відділення";
+    return normalizeLocale(locale) === "en" ? "Nova Poshta branch" : "Нова пошта, відділення";
   }
   return method || "Нова пошта";
 }
@@ -480,19 +439,6 @@ function cancelAdminCopy(locale: string, byAdmin = false) {
       open: "Open order",
     };
   }
-  if (current === "ru") {
-    return {
-      subject: (number: number) => (byAdmin ? `Заказ #${number} отменён` : `Заказ #${number} отменён клиентом`),
-      intro: byAdmin ? "Заказ отменён. Пожалуйста, не отправляйте его." : "Клиент отменил этот заказ. Пожалуйста, не отправляйте его.",
-      customer: "Клиент",
-      phone: "Телефон",
-      email: "Email",
-      city: "Город",
-      warehouse: "Отделение",
-      items: "Товары",
-      open: "Открыть заказ",
-    };
-  }
   return {
     subject: (number: number) => (byAdmin ? `Замовлення №${number} скасоване` : `Замовлення №${number} скасоване клієнтом`),
     intro: byAdmin ? "Замовлення скасоване. Будь ласка, не відправляйте його." : "Клієнт скасував це замовлення. Будь ласка, не відправляйте його.",
@@ -515,15 +461,6 @@ function cancelCustomerCopy(locale: string) {
       intro: "Your order has been cancelled. If you did not cancel it or have any questions, please contact us in Telegram: @LockoShop.",
       items: "Items",
       total: "Total",
-    };
-  }
-  if (current === "ru") {
-    return {
-      subject: (number: number) => `Ваш заказ №${number} отменён`,
-      greeting: (name: string) => `Здравствуйте, ${name}!`,
-      intro: "Вы отменили заказ. Если вы этого не делали или у вас есть вопросы, напишите нам в Telegram: @LockoShop.",
-      items: "Товары",
-      total: "Итого",
     };
   }
   return {

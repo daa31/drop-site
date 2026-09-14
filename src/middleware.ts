@@ -60,7 +60,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const localeAdmin = path.match(/^\/(uk|ru|en)\/admin(?=\/|$)(.*)$/);
+  const localeAdmin = path.match(/^\/(uk|en)\/admin(?=\/|$)(.*)$/);
   if (localeAdmin) {
     const target = `/admin${localeAdmin[2] || ""}`;
     return NextResponse.redirect(new URL(target, `${requestBaseUrl(request)}/`));
@@ -78,5 +78,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/(uk|ru|en)/:path*", "/((?!_next|_vercel|.*\\..*).*)"],
+  matcher: ["/", "/(uk|en)/:path*", "/((?!_next|_vercel|.*\\..*).*)"],
 };

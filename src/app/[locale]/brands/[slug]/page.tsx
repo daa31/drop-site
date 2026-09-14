@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return buildMetadata({
     pageKey: "brands",
     title: `${brand.name} | Locko`,
-    description: brandDescription(brand.name, locale as "uk" | "ru" | "en"),
+    description: brandDescription(brand.name, locale),
     path: `/brands/${slug}`,
     locale,
   });

@@ -4,21 +4,19 @@ import { type Locale } from "@/lib/localization";
 import { tJson } from "@/lib/utils";
 
 const COPY = {
-  title: { uk: "SEO", ru: "SEO", en: "SEO" },
+  title: { uk: "SEO", en: "SEO" },
   intro: {
     uk: "Це не каталог для покупця, а службові SEO-записи для сторінок товарів і розділів.",
-    ru: "Это не каталог для покупателя, а служебные SEO-записи для страниц товаров и разделов.",
     en: "This is not the customer catalog, but service SEO records for product and section pages.",
   },
-  whyTitle: { uk: "Для чого це потрібно", ru: "Для чего это нужно", en: "Why this exists" },
+  whyTitle: { uk: "Для чого це потрібно", en: "Why this exists" },
   whyText: {
     uk: "Кожен шлях `/product/...` зберігає мета-заголовок, опис, H1 і зображення для Google та прев'ю у месенджерах. Якщо запис видалити, сторінка товару лишиться, але пошуковий опис стане гіршим.",
-    ru: "Каждый путь `/product/...` хранит meta-title, description, H1 и изображение для Google и превью в мессенджерах. Если запись удалить, страница товара останется, но поисковое описание станет хуже.",
     en: "Each `/product/...` path stores meta title, description, H1 and image for Google and messenger previews. Removing it keeps the product page, but makes search snippets weaker.",
   },
-  path: { uk: "Шлях", ru: "Путь", en: "Path" },
-  pageTitle: { uk: "Заголовок", ru: "Заголовок", en: "Title" },
-  description: { uk: "Опис", ru: "Описание", en: "Description" },
+  path: { uk: "Шлях", en: "Path" },
+  pageTitle: { uk: "Заголовок", en: "Title" },
+  description: { uk: "Опис", en: "Description" },
 } satisfies Record<string, Record<Locale, string>>;
 
 function t(key: keyof typeof COPY, locale: Locale) {

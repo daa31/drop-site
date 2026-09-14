@@ -64,7 +64,6 @@ const DEFAULT_CITIES = [
 ];
 
 function cityName(city: (typeof DEFAULT_CITIES)[number], locale: string) {
-  if (locale === "ru") return city.ru;
   if (locale === "en") return city.en;
   return city.uk;
 }
@@ -124,37 +123,6 @@ function filterWarehouseOptions(list: WarehouseOption[], query: string): Warehou
 }
 
 function localCopy(locale: string) {
-  if (locale === "ru") {
-    return {
-      contacts: "Контакты получателя",
-      shipping: "Куда отправлять",
-      payment: "Оплата и комментарий",
-      deliveryType: "Новая почта: тип доставки",
-      telegram: "Telegram",
-      optional: "необязательно",
-      noTelegramContact: "Не связываться со мной",
-      branch: "Отделение",
-      locker: "Почтомат",
-      selectCityFirst: "Сначала выберите город из списка Новой почты",
-      warehouseLoading: "Загружаем варианты...",
-      noWarehouses: "Ничего не нашли. Попробуйте уточнить запрос или введите адрес вручную.",
-      emptyCart: "Корзина пустая. Добавьте товар и вернитесь к оформлению.",
-      unavailable: "Один из товаров недоступен. Обновите корзину и попробуйте снова.",
-      server: "Не удалось оформить заказ. Проверьте данные и попробуйте еще раз.",
-      invalid: {
-        name: "Введите имя минимум из 2 символов.",
-        surname: "Введите фамилию.",
-        patronymic: "Введите отчество.",
-        phone: "Введите телефон минимум из 10 символов.",
-        email: "Введите корректный email или оставьте поле пустым.",
-        city: "Введите город.",
-        warehouse: "Введите отделение или почтомат.",
-        telegram: "Укажите Telegram или включите «Не связываться со мной».",
-        agree: "Нужно согласиться с условиями.",
-        turnstile: "Подтвердите, что вы не робот.",
-      },
-    };
-  }
   if (locale === "en") {
     return {
       contacts: "Recipient contacts",
@@ -352,9 +320,9 @@ export function CheckoutForm({
         const remote = Array.isArray(data.cities)
           ? data.cities
               .map((item: Record<string, string>) => ({
-                name: locale === "ru" ? item.DescriptionRu || item.Description : item.Description,
+                name: item.Description,
                 ref: item.Ref,
-                area: locale === "ru" ? item.AreaDescriptionRu || item.AreaDescription : item.AreaDescription,
+                area: item.AreaDescription,
                 branch: item.IsBranch === "1",
               }))
               .filter((item: CityOption) => item.name)
@@ -405,7 +373,7 @@ export function CheckoutForm({
         const remote = Array.isArray(data.warehouses)
           ? data.warehouses
               .map((item: Record<string, string>) => ({
-                name: locale === "ru" ? item.DescriptionRu || item.Description : item.Description,
+                name: item.Description,
                 ref: item.Ref,
                 category: item.CategoryOfWarehouse,
                 number: item.Number,
