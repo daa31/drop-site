@@ -4,7 +4,7 @@ import { Heart, Minus, Plus, Share2, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { formatPrice } from "@/lib/utils";
-import { readWishlistSlugs, setWishlistSlug, WISHLIST_EVENT } from "@/lib/wishlist";
+import { readWishlistSlugs, toggleWishlistSlug, WISHLIST_EVENT } from "@/lib/wishlist";
 
 function fly(button: HTMLElement, targetSelector: string, className: string) {
   const target = document.querySelector<HTMLElement>(targetSelector);
@@ -110,9 +110,9 @@ export function ProductBuy({
         <button
           type="button"
           onClick={(event) => {
-            fly(event.currentTarget, "[data-wishlist-target]", "wish-drop");
-            const change = setWishlistSlug(slug, true);
+            const change = toggleWishlistSlug(slug);
             setIsWished(change.added);
+            if (change.added) fly(event.currentTarget, "[data-wishlist-target]", "wish-drop");
           }}
           className={`grid h-12 w-12 place-items-center rounded-full border bg-white transition hover:border-red-500 hover:text-red-600 ${
             isWished ? "border-red-500 text-red-600" : "border-black/10"
