@@ -149,7 +149,11 @@ export function AdminShell({
             <LocaleSwitch locale={locale} />
           </div>
           <div className="px-3 text-sm font-medium">{adminName}</div>
-          <button type="button" onClick={logout} className="mt-2 flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm text-graphite/70 hover:bg-mist">
+          <Link href="/" className="mt-2 flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-graphite/70 transition hover:bg-mist hover:text-ink">
+            <Home size={17} />
+            {label("backToSite", locale)}
+          </Link>
+          <button type="button" onClick={logout} className="mt-1 flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm text-graphite/70 hover:bg-mist">
             <LogOut size={17} />
             {label("logout", locale)}
           </button>
@@ -164,6 +168,9 @@ export function AdminShell({
             </Link>
             <div className="flex items-center gap-2">
               <LocaleSwitch locale={locale} compact />
+              <Link href="/" className="grid h-10 w-10 place-items-center rounded-lg bg-white" aria-label={label("backToSite", locale)}>
+                <Home size={18} />
+              </Link>
               <button type="button" onClick={logout} className="grid h-10 w-10 place-items-center rounded-lg bg-white" aria-label={label("logout", locale)}>
                 <LogOut size={18} />
               </button>

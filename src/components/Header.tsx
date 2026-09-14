@@ -331,6 +331,11 @@ export function Header({
                 ))}
               </div>
               <div className="grid gap-2 text-sm">
+                {user?.role === "admin" && (
+                  <Link href="/admin" data-crm-link onClick={() => setMenu(false)} className="flex items-center justify-between rounded-lg bg-ink px-4 py-3 font-semibold text-white">
+                    <span>{t("crm")}</span>
+                  </Link>
+                )}
                 <Link href="/catalog" onClick={() => setMenu(false)} className="rounded-lg bg-ink px-4 py-3 font-semibold text-white">
                   {t("catalog")}
                 </Link>

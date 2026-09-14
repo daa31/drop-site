@@ -19,6 +19,7 @@ export const ADMIN_NAV_COPY = {
   siteGroup: { uk: "Сайт", ru: "Сайт", en: "Site" },
   logout: { uk: "Вийти", ru: "Выйти", en: "Sign out" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
+  backToSite: { uk: "На сайт", ru: "На сайт", en: "Back to site" },
 } satisfies Record<string, LocalizedText>;
 
 export const ADMIN_COMMON_COPY = {
